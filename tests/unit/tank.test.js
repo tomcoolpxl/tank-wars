@@ -38,6 +38,11 @@ describe('Tank Physics', () => {
         tank.health = 0;
         tank.step(terrain);
         expect(tank.alive).toBe(false);
+        
+        // Calling step on dead tank should do nothing
+        const initialX = tank.x_fp;
+        tank.step(terrain);
+        expect(tank.x_fp).toBe(initialX);
     });
 
     it('should die when falling out of bounds (horizontal)', () => {
@@ -66,20 +71,28 @@ describe('Tank Physics', () => {
         expect(tank.vy_fp).toBe(0);
     });
 
-    it('should slide on steep slopes', () => {
+    it('should slide on steep slopes (downhill right)', () => {
         const terrain = new Terrain();
-        // Create a steep slope: h(98)=110, h(102)=90. dh = -20, dx = 4.
+        // hL=110 (x-2), hR=90 (x+2) -> dh = -20. slideDir = 1 (right)
         terrain.heights.fill(100);
         terrain.heights[98/2] = 110;
         terrain.heights[102/2] = 90;
         
         const tank = new Tank(0, 100 * FP, 106 * FP);
-        tank.vx_fp = 0;
-        
         tank.step(terrain);
-        
-        // dh = 90 - 110 = -20. slideDir = 1 (downhill to the right)
         expect(tank.vx_fp).toBeGreaterThan(0);
+    });
+
+    it('should slide on steep slopes (downhill left)', () => {
+        const terrain = new Terrain();
+        // hL=90 (x-2), hR=110 (x+2) -> dh = 20. slideDir = -1 (left)
+        terrain.heights.fill(100);
+        terrain.heights[98/2] = 90;
+        terrain.heights[102/2] = 110;
+        
+        const tank = new Tank(0, 100 * FP, 106 * FP);
+        tank.step(terrain);
+        expect(tank.vx_fp).toBeLessThan(0);
     });
 
     it('should apply friction on gentle slopes', () => {

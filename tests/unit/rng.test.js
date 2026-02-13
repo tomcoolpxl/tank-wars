@@ -23,6 +23,11 @@ describe('Deterministic RNG', () => {
         expect(matchCount).toBeLessThan(5);
     });
 
+    it('should handle seed 0 by using 1', () => {
+        const rng = new RNG(0);
+        expect(rng.state).toBe(1);
+    });
+
     it('should respect integer range', () => {
         const rng = new RNG(42);
         const min = 10;
@@ -32,5 +37,11 @@ describe('Deterministic RNG', () => {
             expect(val).toBeGreaterThanOrEqual(min);
             expect(val).toBeLessThanOrEqual(max);
         }
+    });
+
+    it('should return min if max <= min', () => {
+        const rng = new RNG(42);
+        expect(rng.nextInt(10, 10)).toBe(10);
+        expect(rng.nextInt(10, 5)).toBe(10);
     });
 });

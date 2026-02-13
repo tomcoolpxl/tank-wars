@@ -12,6 +12,10 @@ describe('Trig LUT', () => {
         expect(getSin(30)).toBeCloseTo(0.5 * FP, -1);
     });
 
+    it('should handle negative angles in getSin', () => {
+        expect(getSin(-90)).toBe(-1 * FP);
+    });
+
     it('should return correct cosine values', () => {
         expect(getCos(0)).toBe(1 * FP);
         expect(getCos(90)).toBe(0);

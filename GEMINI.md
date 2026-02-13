@@ -35,11 +35,16 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 - **`src/main.js`**: Phaser entry point.
 - **`tests/`**: Unit, Integration, and E2E test suites.
 
+## Documentation
+- **Detailed Requirements:** `docs/REQUIREMENTS.md`
+- **Testing Guide:** `docs/TESTING.md`
+- **Deep Code Exploration:** `docs/CODE_EXPLORATION.md`
+
 ## Tests
 - **Unit Tests (`vitest`):** Comprehensive coverage of simulation logic. Run with `npm run test:unit`.
 - **E2E Tests (`playwright`):** Full match automation, P2P handshake, and security validation. Run with `npm run test:e2e`.
 - **Coverage:** Measured via `@vitest/coverage-v8`. Current line coverage > 95%.
-- **See `TESTING.md` for detailed instructions.**
+- **See `docs/TESTING.md` for detailed instructions.**
 
 ## Development Rules
 1. **Determinism:** Never use `Math.random()`, `Date.now()`, or floating-point numbers in `src/simulation/`.

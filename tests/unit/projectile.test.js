@@ -51,4 +51,25 @@ describe('Projectile Physics', () => {
         const result = p.step(new Terrain(), []);
         expect(result.type).toBe('out-of-bounds');
     });
+
+    it('should return null if step called on inactive projectile', () => {
+        const p = new Projectile(100 * FP, 100 * FP, 0, 0, 0);
+        p.active = false;
+        expect(p.step(new Terrain(), [])).toBeNull();
+    });
+
+    it('should ignore self-collision initially but allow it later', () => {
+        const shooter = new Tank(0, 100 * FP, 100 * FP);
+        const target = new Tank(1, 200 * FP, 200 * FP);
+        const p = new Projectile(100 * FP, 100 * FP, 90, 0, 0, 0);
+        
+        // Ticks 0-4: ignore self
+        for (let i = 0; i < 4; i++) {
+            expect(p.step(new Terrain(), [shooter, target])).toBeNull();
+        }
+        
+        // Tick 5+: hit self
+        const result = p.step(new Terrain(), [shooter, target]);
+        expect(result.type).toBe('explosion');
+    });
 });

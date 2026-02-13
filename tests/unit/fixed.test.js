@@ -25,6 +25,9 @@ describe('Fixed-Point Math', () => {
         
         // Negative division
         expect(divFP(-1 * FP, 3 * FP)).toBe(-3333);
+
+        // Division by zero
+        expect(divFP(10 * FP, 0)).toBe(0);
     });
 
     it('should clamp values correctly', () => {

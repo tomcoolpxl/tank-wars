@@ -47,4 +47,15 @@ describe('Explosion Logic', () => {
         
         expect(terrain.getHeightAtX(100)).toBeLessThan(200);
     });
+
+    it('should skip dead tanks', () => {
+        const terrain = new Terrain();
+        const tank = new Tank(0, 100 * FP, 100 * FP);
+        tank.health = 0;
+        tank.alive = false;
+        
+        applyExplosion(100, 100, terrain, [tank]);
+        expect(tank.health).toBe(0);
+        expect(tank.alive).toBe(false);
+    });
 });

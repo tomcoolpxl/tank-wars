@@ -29,6 +29,9 @@ describe('Terrain', () => {
 
         const hMid = t.getHeightAtX(WIDTH / 2);
         expect(hMid).toBe(t.heights[t.heights.length / 2]);
+
+        expect(t.getHeightAtX(-10)).toBe(t.heights[0]);
+        expect(t.getHeightAtX(WIDTH + 10)).toBe(t.heights[t.heights.length - 1]);
     });
 
     it('should deform correctly with a crater', () => {

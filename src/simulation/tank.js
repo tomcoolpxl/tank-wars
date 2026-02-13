@@ -109,17 +109,12 @@ export class Tank {
             
             const friction_comp_fp = mulFP(FRICTION_KINETIC_FP, cos_fp);
             
-            if (sin_fp > friction_comp_fp) {
-                let accel_fp = (GRAVITY_FP * (sin_fp - friction_comp_fp)) / FP;
-                // Convert from units/s^2 to units/tick^2
-                accel_fp = Math.floor(accel_fp / 3600);
-                
-                const slideDir = dh > 0 ? -1 : 1;
-                this.vx_fp += slideDir * accel_fp;
-            } else {
-                // Not enough slope to overcome kinetic friction
-                this.vx_fp = Math.floor(this.vx_fp * 800 / 1000);
-            }
+            let accel_fp = (GRAVITY_FP * (sin_fp - friction_comp_fp)) / FP;
+            // Convert from units/s^2 to units/tick^2
+            accel_fp = Math.floor(accel_fp / 3600);
+            
+            const slideDir = dh > 0 ? -1 : 1;
+            this.vx_fp += slideDir * accel_fp;
         } else {
             // Friction
             this.vx_fp = Math.floor(this.vx_fp * 800 / 1000); // 0.8 friction

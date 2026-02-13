@@ -45,6 +45,14 @@ This game uses Google's public STUN servers to discover your network address. Ho
 - Connection may fail on restrictive corporate or university networks that require a TURN relay.
 - If you see "ICE: failed" or the candidate count stays at 0, your network might be blocking the P2P connection.
 
+## Documentation
+
+For more detailed technical documentation, please refer to the following files in the `docs/` directory:
+
+- [Requirements](docs/REQUIREMENTS.md) - Detailed project requirements and scope.
+- [Testing Guide](docs/TESTING.md) - How to run and write tests, including determinism tests.
+- [Code Exploration](docs/CODE_EXPLORATION.md) - Deep dive into the architecture and deterministic engine.
+
 ## Development
 
 ### Prerequisites
