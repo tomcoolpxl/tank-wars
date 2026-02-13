@@ -19,6 +19,11 @@ export class Simulation {
             this.createTank(0, TANK_SPAWN_LEFT_RANGE),
             this.createTank(1, TANK_SPAWN_RIGHT_RANGE)
         ];
+
+        // Initial snap to terrain and slope calculation
+        for (const tank of this.tanks) {
+            tank.step(this.terrain);
+        }
         
         this.projectile = null;
         this.rules = new Rules();

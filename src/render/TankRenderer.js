@@ -78,17 +78,6 @@ export class TankRenderer {
             
             // Rotation from simulation (Invert for screen space)
             container.angle = -tank.baseAngleDeg;
-            
-            // Health bar
-            if (tank.alive) {
-                healthBar.fillStyle(0x00ff00, 0.8);
-                const hpPct = tank.health / 100;
-                healthBar.fillRect(-15, -20, 30 * hpPct, 4);
-                
-                // Health bar glow
-                healthBar.lineStyle(1, 0x00ff00, 0.3);
-                healthBar.strokeRect(-16, -21, 32, 6);
-            }
         });
     }
 

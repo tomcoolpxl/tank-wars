@@ -45,33 +45,28 @@ export class Tank {
         // 4.5 Terrain contact and tolerance
         const epsilon = 1; // 1 pixel
         
+        // Calculate slope for rotation
+        const hL = terrain.getHeightAtX(x - 4);
+        const hR = terrain.getHeightAtX(x + 4);
+        // angle = atan2(dy, dx)
+        this.baseAngleDeg = Math.floor(Math.atan2(hR - hL, 8) * 180 / Math.PI);
+
         if (tankBottomY <= groundY + epsilon && tankBottomY >= groundY - epsilon) {
             // On ground
             this.y_fp = (groundY + (TANK_HEIGHT / 2)) * FP;
             this.vy_fp = 0;
             this.vx_fp = 0; // No horizontal movement
-            
-            // Calculate slope for rotation
-            const hL = terrain.getHeightAtX(x - 4);
-            const hR = terrain.getHeightAtX(x + 4);
-            // angle = atan2(dy, dx)
-            this.baseAngleDeg = Math.floor(Math.atan2(hR - hL, 8) * 180 / Math.PI);
         } else if (tankBottomY > groundY) {
             // In air
             this.vy_fp -= this.g_per_tick_fp;
             this.vx_fp = 0; // Fall straight down
             this.stable = false;
-            this.baseAngleDeg = 0;
         } else {
             // Below ground (after terrain removal)
             this.y_fp = (groundY + (TANK_HEIGHT / 2)) * FP;
             this.vy_fp = 0;
             this.vx_fp = 0;
             this.stable = false;
-            
-            const hL = terrain.getHeightAtX(x - 4);
-            const hR = terrain.getHeightAtX(x + 4);
-            this.baseAngleDeg = Math.floor(Math.atan2(hR - hL, 8) * 180 / Math.PI);
         }
 
         this.x_fp += this.vx_fp;

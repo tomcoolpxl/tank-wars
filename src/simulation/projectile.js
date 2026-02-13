@@ -59,7 +59,7 @@ export class Projectile {
             
             // Ignore shooter for the first few ticks to avoid self-collision at launch
             if (tank.id === this.shooterId) {
-                if (this.ticksAlive < 5) continue;
+                if (this.ticksAlive < 20) continue;
             }
 
             const tx = Math.floor(tank.x_fp / FP);
