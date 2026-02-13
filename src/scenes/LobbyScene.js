@@ -96,7 +96,9 @@ export class LobbyScene extends Phaser.Scene {
             statusText.innerText = 'Generating offer...';
             
             const offer = await this.networkManager.createOffer();
-            document.getElementById('offer-out').value = offer;
+            const offerOut = document.getElementById('offer-out');
+            offerOut.value = offer;
+            offerOut.dispatchEvent(new Event('input', { bubbles: true }));
             statusText.innerText = 'Waiting for answer...';
         });
 

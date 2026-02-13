@@ -42,11 +42,15 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 - **`tests/`**: Standalone deterministic logic tests.
 
 ## Tests
-- `npm test`: Runs the full test suite via `tests/run_tests.js`.
-- `tests/phase3_test.js`: Verifies deterministic input handling (angle/power increments) and authoritative auto-fire timeout.
-- `tests/determinism.js`: Verifies simulation determinism by running two identical simulations and comparing state hashes turn-by-turn.
+- `npm run test:unit`: Runs the unit test suite using **Vitest**. (Located in `tests/unit/`).
+- `npm run test:e2e`: Runs full match automation using **Playwright**. (Located in `tests/e2e/`).
+- `npm run test:legacy`: Runs the original standalone node tests (`tests/run_tests.js`).
+- `tests/determinism.js`: Core verification tool that runs two identical simulations and compares state hashes turn-by-turn.
 
 ## Development Rules
 1. **Determinism:** Never use `Math.random()`, `Date.now()`, or floating-point numbers in `src/simulation/`.
 2. **Fixed Timestep:** Simulation logic should be stepped at 60Hz.
 3. **Phaser Binding:** Phaser should only read from the simulation state to render visuals. It should not modify simulation state directly.
+4. **Networking Reliability:** The `NetworkManager` includes a 2-second timeout for ICE gathering to ensure handshakes complete even in restricted network environments.
+5. **State Hashing:** `Simulation.getStateHash()` excludes `turnTimer` and `tickCount` to allow for minor P2P timing jitter while ensuring core game state (positions, health, terrain) remains perfectly synchronized.
+

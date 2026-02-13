@@ -28,15 +28,23 @@ export class NetworkManager {
         await this.peerConnection.setLocalDescription(offer);
 
         return new Promise((resolve) => {
+            const timeout = setTimeout(() => {
+                this.peerConnection.removeEventListener('icecandidate', checkState);
+                resolve(JSON.stringify(this.peerConnection.localDescription));
+            }, 2000);
+
+            const checkState = () => {
+                if (this.peerConnection.iceGatheringState === 'complete') {
+                    clearTimeout(timeout);
+                    this.peerConnection.removeEventListener('icecandidate', checkState);
+                    resolve(JSON.stringify(this.peerConnection.localDescription));
+                }
+            };
+
             if (this.peerConnection.iceGatheringState === 'complete') {
+                clearTimeout(timeout);
                 resolve(JSON.stringify(this.peerConnection.localDescription));
             } else {
-                const checkState = () => {
-                    if (this.peerConnection.iceGatheringState === 'complete') {
-                        this.peerConnection.removeEventListener('icecandidate', checkState);
-                        resolve(JSON.stringify(this.peerConnection.localDescription));
-                    }
-                };
                 this.peerConnection.addEventListener('icecandidate', checkState);
             }
         });
@@ -53,15 +61,23 @@ export class NetworkManager {
         await this.peerConnection.setLocalDescription(answer);
 
         return new Promise((resolve) => {
+            const timeout = setTimeout(() => {
+                this.peerConnection.removeEventListener('icecandidate', checkState);
+                resolve(JSON.stringify(this.peerConnection.localDescription));
+            }, 2000);
+
+            const checkState = () => {
+                if (this.peerConnection.iceGatheringState === 'complete') {
+                    clearTimeout(timeout);
+                    this.peerConnection.removeEventListener('icecandidate', checkState);
+                    resolve(JSON.stringify(this.peerConnection.localDescription));
+                }
+            };
+
             if (this.peerConnection.iceGatheringState === 'complete') {
+                clearTimeout(timeout);
                 resolve(JSON.stringify(this.peerConnection.localDescription));
             } else {
-                const checkState = () => {
-                    if (this.peerConnection.iceGatheringState === 'complete') {
-                        this.peerConnection.removeEventListener('icecandidate', checkState);
-                        resolve(JSON.stringify(this.peerConnection.localDescription));
-                    }
-                };
                 this.peerConnection.addEventListener('icecandidate', checkState);
             }
         });

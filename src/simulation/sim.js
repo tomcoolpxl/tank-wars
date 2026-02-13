@@ -237,7 +237,7 @@ export class Simulation {
         hashInt(this.rules.turnNumber);
         hashInt(this.rules.activePlayerIndex);
         hashInt(this.rules.state);
-        hashInt(this.rules.turnTimer);
+        // hashInt(this.rules.turnTimer); // Excluded for P2P tolerance
 
         // 5. RNG State
         hashInt(this.rng.state);
