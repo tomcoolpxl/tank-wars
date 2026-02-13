@@ -3,9 +3,10 @@ import { getSin, getCos } from './trigLUT.js';
 import { mulFP } from './fixed.js';
 
 export class Projectile {
-    constructor(x_fp, y_fp, angleDeg, power, wind) {
+    constructor(x_fp, y_fp, angleDeg, power, wind, shooterId = -1) {
         this.x_fp = x_fp;
         this.y_fp = y_fp;
+        this.shooterId = shooterId;
         
         // v0 = power * 4 units/s
         const v0 = power * 4;
@@ -55,6 +56,10 @@ export class Projectile {
         // 3. Tank collision (AABB)
         for (const tank of tanks) {
             if (!tank.alive) continue;
+            
+            // Ignore shooter for the first few ticks to avoid self-collision at launch
+            if (tank.id === this.shooterId && this.ticksAlive < 5) continue;
+
             const tx = Math.floor(tank.x_fp / FP);
             const ty = Math.floor(tank.y_fp / FP);
             

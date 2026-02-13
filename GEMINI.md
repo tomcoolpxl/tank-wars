@@ -13,7 +13,7 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 - **Phase 6 (Determinism Harness):** COMPLETE.
 - **Phase 7 (Visual Polish):** COMPLETE.
 - **Phase 8 (Packaging & Reliability):** COMPLETE.
-- **Phase 9 (Code Review & Optimization):** COMPLETE.
+- **Phase 9 (Advanced Testing & Coverage):** COMPLETE.
 
 ## Architecture
 - **`src/simulation/`**: Pure logic core.
@@ -24,28 +24,22 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
     - `isqrt.js`: Integer square root (used for physics/explosions).
     - `terrain.js`: Heightmap and deformation.
     - `tank.js`: Tank physics (improved slope-based sliding).
-    - `projectile.js`: Projectile physics.
+    - `projectile.js`: Projectile physics (self-collision protection).
     - `explosion.js`: Damage and crater logic.
     - `rules.js`: Turn-based state machine.
     - `sim.js`: Main Simulation API (includes state serialization for resync).
 - **`src/net/`**: WebRTC P2P networking.
-    - `webrtc.js`: `NetworkManager` for P2P connections.
-- **`src/ui/`**: UI components.
-    - `HUD.js`: Game overlay (health, stats, timer, game over, wind arrow, power bar).
+- **`src/ui/`**: UI components (HUD, Lobby).
 - **`src/render/`**: Phaser-specific rendering helpers.
-    - `TerrainRenderer.js`: Neon polyline and glow for terrain.
-    - `TankRenderer.js`: Container-based tank with glow and health.
-    - `ProjectileRenderer.js`: Projectile with glow and trail.
-    - `ExplosionRenderer.js`: Neon expanding rings and particles.
 - **`src/scenes/`**: Phaser scenes (`LobbyScene`, `GameScene`).
 - **`src/main.js`**: Phaser entry point.
-- **`tests/`**: Standalone deterministic logic tests.
+- **`tests/`**: Unit, Integration, and E2E test suites.
 
 ## Tests
-- `npm run test:unit`: Runs the unit test suite using **Vitest**. (Located in `tests/unit/`).
-- `npm run test:e2e`: Runs full match automation using **Playwright**. (Located in `tests/e2e/`).
-- `npm run test:legacy`: Runs the original standalone node tests (`tests/run_tests.js`).
-- `tests/determinism.js`: Core verification tool that runs two identical simulations and compares state hashes turn-by-turn.
+- **Unit Tests (`vitest`):** Comprehensive coverage of simulation logic. Run with `npm run test:unit`.
+- **E2E Tests (`playwright`):** Full match automation, P2P handshake, and security validation. Run with `npm run test:e2e`.
+- **Coverage:** Measured via `@vitest/coverage-v8`. Current line coverage > 95%.
+- **See `TESTING.md` for detailed instructions.**
 
 ## Development Rules
 1. **Determinism:** Never use `Math.random()`, `Date.now()`, or floating-point numbers in `src/simulation/`.

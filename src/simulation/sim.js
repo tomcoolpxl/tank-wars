@@ -119,7 +119,8 @@ export class Simulation {
             activeTank.y_fp, 
             angle, 
             power, 
-            this.rules.wind
+            this.rules.wind,
+            activeTank.id
         );
         this.rules.state = GameState.PROJECTILE_FLIGHT;
     }

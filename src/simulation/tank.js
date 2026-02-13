@@ -34,6 +34,13 @@ export class Tank {
         const groundY = terrain.getHeightAtX(x);
         const tankBottomY = y - (TANK_HEIGHT / 2);
 
+        // 4.6 Health and loss: Tank bottom y < 0 (safety condition)
+        if (tankBottomY < 0) {
+            this.health = 0;
+            this.alive = false;
+            return;
+        }
+
         // 4.5 Terrain contact and tolerance
         const epsilon = 1; // 1 pixel
         

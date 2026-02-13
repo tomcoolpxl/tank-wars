@@ -147,6 +147,8 @@ export class HUD {
             this.gameOverOverlay.setVisible(true);
             if (rules.winner === -1) {
                 this.winText.setText('DRAW!');
+            } else if (rules.winner === -2) {
+                // Text is already set by abortMatch
             } else {
                 this.winText.setText(`PLAYER ${rules.winner + 1} WINS!`);
             }

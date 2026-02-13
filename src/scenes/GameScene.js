@@ -85,24 +85,41 @@ export class GameScene extends Phaser.Scene {
     handleRemoteShot(msg) {
         if (this.simulation.rules.state !== GameState.TURN_AIM) return;
         if (this.simulation.rules.activePlayerIndex === this.localPlayerIndex) {
-            console.error('Received SHOT message on our turn?');
+            this.abortMatch('Protocol Error: Received SHOT on our turn');
             return;
         }
         if (msg.turnNumber !== this.simulation.rules.turnNumber) {
-            console.error('Turn number mismatch', msg.turnNumber, this.simulation.rules.turnNumber);
+            this.abortMatch(`Protocol Error: Turn mismatch (Expected ${this.simulation.rules.turnNumber}, got ${msg.turnNumber})`);
             return;
         }
 
-        // Validate angle and power
-        const angle = Math.floor(msg.angle);
-        const power = Math.floor(msg.power);
-        if (isNaN(angle) || angle < 0 || angle > 180 || isNaN(power) || power < 0 || power > 100) {
-            console.error('Invalid SHOT parameters', msg);
+        // 8.5 SHOT MESSAGE VALIDATION: angleDeg must be an integer in [0, 180]
+        const angle = msg.angle;
+        const power = msg.power;
+        
+        const isInvalid = !Number.isInteger(angle) || angle < 0 || angle > 180 || 
+                          !Number.isInteger(power) || power < 0 || power > 100;
+        
+        if (isInvalid) {
+            this.abortMatch(`Security Error: Invalid SHOT parameters (${angle}, ${power})`);
             return;
         }
 
         this.recordShot(angle, power);
         this.simulation.fire(angle, power, this.simulation.rules.activePlayerIndex);
+    }
+
+    abortMatch(reason) {
+        console.error(`ABORTING MATCH: ${reason}`);
+        this.simulation.rules.state = GameState.GAME_OVER;
+        this.simulation.rules.winner = -2; // Special value for aborted/error
+        
+        // Show error on HUD
+        if (this.hud) {
+            this.hud.winText.setText('MATCH ABORTED');
+            this.hud.gameOverSubtext.setText(reason.toUpperCase());
+            this.hud.gameOverOverlay.setVisible(true);
+        }
     }
 
     handleRemoteHash(msg) {
