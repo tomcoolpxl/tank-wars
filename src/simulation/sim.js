@@ -63,7 +63,7 @@ export class Simulation {
 
                 // Auto-fire on timeout
                 if (this.rules.turnTimer <= 0) {
-                    this.fire(activeTank.aimAngle, activeTank.aimPower);
+                    this.fire(activeTank.aimAngle, activeTank.aimPower, this.rules.activePlayerIndex);
                 }
                 break;
 
@@ -101,8 +101,14 @@ export class Simulation {
         }
     }
 
-    fire(angle, power) {
+    fire(angle, power, playerIndex) {
         if (this.rules.state !== GameState.TURN_AIM) return;
+        
+        // Security check: ensure only active player can fire
+        if (playerIndex !== undefined && playerIndex !== this.rules.activePlayerIndex) {
+            console.error(`Rejected fire() from player ${playerIndex} on player ${this.rules.activePlayerIndex}'s turn.`);
+            return;
+        }
 
         const activeTank = this.tanks[this.rules.activePlayerIndex];
         activeTank.aimAngle = angle;
@@ -127,6 +133,68 @@ export class Simulation {
             this.rules.state = GameState.GAME_OVER;
             this.rules.winner = aliveTanks[0].id;
         }
+    }
+
+    getState() {
+        return {
+            terrain: Array.from(this.terrain.heights),
+            tanks: this.tanks.map(t => ({
+                id: t.id,
+                x_fp: t.x_fp,
+                y_fp: t.y_fp,
+                vx_fp: t.vx_fp,
+                vy_fp: t.vy_fp,
+                health: t.health,
+                alive: t.alive,
+                aimAngle: t.aimAngle,
+                aimPower: t.aimPower
+            })),
+            rules: {
+                turnNumber: this.rules.turnNumber,
+                activePlayerIndex: this.rules.activePlayerIndex,
+                state: this.rules.state,
+                turnTimer: this.rules.turnTimer,
+                wind: this.rules.wind,
+                winner: this.rules.winner,
+                stabilizationTimer: this.rules.stabilizationTimer
+            },
+            rngState: this.rng.state,
+            tickCount: this.tickCount
+        };
+    }
+
+    setState(state) {
+        // Restore Terrain
+        for (let i = 0; i < state.terrain.length; i++) {
+            this.terrain.heights[i] = state.terrain[i];
+        }
+
+        // Restore Tanks
+        for (let i = 0; i < state.tanks.length; i++) {
+            const s = state.tanks[i];
+            const t = this.tanks[i];
+            t.x_fp = s.x_fp;
+            t.y_fp = s.y_fp;
+            t.vx_fp = s.vx_fp;
+            t.vy_fp = s.vy_fp;
+            t.health = s.health;
+            t.alive = s.alive;
+            t.aimAngle = s.aimAngle;
+            t.aimPower = s.aimPower;
+        }
+
+        // Restore Rules
+        this.rules.turnNumber = state.rules.turnNumber;
+        this.rules.activePlayerIndex = state.rules.activePlayerIndex;
+        this.rules.state = state.rules.state;
+        this.rules.turnTimer = state.rules.turnTimer;
+        this.rules.wind = state.rules.wind;
+        this.rules.winner = state.rules.winner;
+        this.rules.stabilizationTimer = state.rules.stabilizationTimer;
+
+        // Restore RNG and counters
+        this.rng.state = state.rngState;
+        this.tickCount = state.tickCount;
     }
 
     getStateHash() {

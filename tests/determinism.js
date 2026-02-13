@@ -16,7 +16,7 @@ function runSimulation(seed, shots) {
     while (sim.rules.state !== GameState.GAME_OVER && ticks < MAX_TICKS) {
         if (sim.rules.state === GameState.TURN_AIM && shotIndex < shots.length) {
             const shot = shots[shotIndex++];
-            sim.fire(shot.angle, shot.power);
+            sim.fire(shot.angle, shot.power, sim.rules.activePlayerIndex);
             
             // Step until next turn or game over
             while (sim.rules.state !== GameState.TURN_AIM && sim.rules.state !== GameState.GAME_OVER && ticks < MAX_TICKS) {

@@ -34,19 +34,30 @@ export class GameScene extends Phaser.Scene {
         this.isReplaying = !!data.replayShots;
         this.replayShots = data.replayShots || [];
         this.replayIndex = 0;
+        
+        this.lastTurnNumber = 0;
     }
 
     create() {
         // Initialize simulation with the shared seed
         this.simulation = new Simulation(this.seed);
         this.simulation.start();
+        this.lastTurnNumber = this.simulation.rules.turnNumber;
 
         // Listen for network messages
         if (this.networkManager) {
             this.networkManager.onMessage((msg) => {
                 if (this.isReplaying) return;
-                if (msg.type === 'SHOT') {
-                    this.handleRemoteShot(msg);
+                switch (msg.type) {
+                    case 'SHOT':
+                        this.handleRemoteShot(msg);
+                        break;
+                    case 'HASH':
+                        this.handleRemoteHash(msg);
+                        break;
+                    case 'SYNC':
+                        this.handleRemoteSync(msg);
+                        break;
                 }
             });
         }
@@ -91,7 +102,44 @@ export class GameScene extends Phaser.Scene {
         }
 
         this.recordShot(angle, power);
-        this.simulation.fire(angle, power);
+        this.simulation.fire(angle, power, this.simulation.rules.activePlayerIndex);
+    }
+
+    handleRemoteHash(msg) {
+        if (!this.isHost) return; // Only host validates hashes
+        
+        const myHash = this.simulation.getStateHash();
+        if (msg.hash !== myHash) {
+            console.warn(`Hash mismatch detected at turn ${msg.turnNumber}! (Remote: ${msg.hash}, Local: ${myHash})`);
+            console.warn('Sending authoritative state SYNC to client.');
+            this.networkManager.send({
+                type: 'SYNC',
+                state: this.simulation.getState()
+            });
+        } else {
+            console.log(`Hash match at turn ${msg.turnNumber}.`);
+        }
+    }
+
+    handleRemoteSync(msg) {
+        if (this.isHost) return; // Client only accepts sync from host
+        console.log('Received authoritative state SYNC from host. Applying...');
+        this.simulation.setState(msg.state);
+        // Refresh visuals
+        this.terrainRenderer.render(this.simulation.terrain);
+        this.tankRenderer.render(this.simulation.tanks, this.simulation.terrain);
+    }
+
+    handleTurnTransition() {
+        if (!this.networkManager || this.isReplaying) return;
+        
+        const hash = this.simulation.getStateHash();
+        console.log(`Turn ended. Sending HASH: ${hash} for turn ${this.lastTurnNumber}`);
+        this.networkManager.send({
+            type: 'HASH',
+            turnNumber: this.lastTurnNumber,
+            hash: hash
+        });
     }
 
     recordShot(angle, power) {
@@ -124,6 +172,12 @@ export class GameScene extends Phaser.Scene {
         while (this.tickAccumulator >= TICK_DURATION_MS) {
             this.simulation.step(inputs);
             
+            // Detect turn transition
+            if (this.simulation.rules.turnNumber !== this.lastTurnNumber) {
+                this.handleTurnTransition();
+                this.lastTurnNumber = this.simulation.rules.turnNumber;
+            }
+
             // Check for local fire
             if (!this.isReplaying && isMyTurn && isAiming) {
                 const activeTank = this.simulation.tanks[this.localPlayerIndex];
@@ -136,7 +190,7 @@ export class GameScene extends Phaser.Scene {
                     };
                     this.networkManager.send(shotData);
                     this.recordShot(activeTank.aimAngle, activeTank.aimPower);
-                    this.simulation.fire(activeTank.aimAngle, activeTank.aimPower);
+                    this.simulation.fire(activeTank.aimAngle, activeTank.aimPower, this.localPlayerIndex);
                 }
             }
 
@@ -144,7 +198,7 @@ export class GameScene extends Phaser.Scene {
             if (this.isReplaying && isAiming && this.replayIndex < this.replayShots.length) {
                 const nextShot = this.replayShots[this.replayIndex];
                 if (nextShot.turn === this.simulation.rules.turnNumber) {
-                    this.simulation.fire(nextShot.angle, nextShot.power);
+                    this.simulation.fire(nextShot.angle, nextShot.power, this.simulation.rules.activePlayerIndex);
                     this.replayIndex++;
                 }
             }

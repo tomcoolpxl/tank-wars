@@ -49,6 +49,7 @@ export class LobbyScene extends Phaser.Scene {
                     <div style="font-size: 10px; margin-top: 5px; color: #0a0;">
                         ICE: <span id="ice-status">new</span> | Candidates: <span id="ice-count">0</span>
                     </div>
+                    <button id="btn-cancel" style="margin-top: 10px; background: #000; color: #f44; border: 1px solid #f44; cursor: pointer; display: none;">CANCEL</button>
                 </div>
             </div>
         `;
@@ -63,6 +64,25 @@ export class LobbyScene extends Phaser.Scene {
         const statusText = document.getElementById('status-text');
         const iceStatus = document.getElementById('ice-status');
         const iceCount = document.getElementById('ice-count');
+        const btnCancel = document.getElementById('btn-cancel');
+
+        let connectionTimeout = null;
+        const startTimeout = () => {
+            if (connectionTimeout) clearTimeout(connectionTimeout);
+            connectionTimeout = setTimeout(() => {
+                if (statusText.innerText.includes('Connecting')) {
+                    statusText.innerText = 'Connection timed out. Retrying...';
+                    statusText.style.color = '#f88';
+                }
+            }, 20000);
+        };
+
+        const resetUI = () => {
+            if (connectionTimeout) clearTimeout(connectionTimeout);
+            this.scene.restart();
+        };
+
+        btnCancel.addEventListener('click', resetUI);
 
         this.networkManager.onIceUpdate((state, count) => {
             iceStatus.innerText = state;
@@ -72,6 +92,7 @@ export class LobbyScene extends Phaser.Scene {
         btnHost.addEventListener('click', async () => {
             initialActions.style.display = 'none';
             hostSection.style.display = 'block';
+            btnCancel.style.display = 'inline-block';
             statusText.innerText = 'Generating offer...';
             
             const offer = await this.networkManager.createOffer();
@@ -82,6 +103,7 @@ export class LobbyScene extends Phaser.Scene {
         btnJoin.addEventListener('click', () => {
             initialActions.style.display = 'none';
             joinSection.style.display = 'block';
+            btnCancel.style.display = 'inline-block';
             statusText.innerText = 'Paste offer and click "Create Answer"';
         });
 
@@ -95,10 +117,12 @@ export class LobbyScene extends Phaser.Scene {
         document.getElementById('btn-connect-host').addEventListener('click', async () => {
             const answerText = document.getElementById('answer-in').value;
             try {
-                await this.networkManager.acceptAnswer(answerText);
                 statusText.innerText = 'Connecting...';
+                startTimeout();
+                await this.networkManager.acceptAnswer(answerText);
             } catch (e) {
-                statusText.innerText = 'Error: Invalid answer';
+                statusText.innerText = 'Error: Invalid answer format';
+                statusText.style.color = '#f00';
             }
         });
 
@@ -111,7 +135,8 @@ export class LobbyScene extends Phaser.Scene {
                 document.getElementById('answer-section').style.display = 'block';
                 statusText.innerText = 'Answer generated. Send it to the host.';
             } catch (e) {
-                statusText.innerText = 'Error: Invalid offer';
+                statusText.innerText = 'Error: Invalid offer format';
+                statusText.style.color = '#f00';
             }
         });
 
@@ -125,8 +150,12 @@ export class LobbyScene extends Phaser.Scene {
         this.networkManager.onConnectionStateChange((state) => {
             statusText.innerText = `Connection: ${state}`;
             if (state === 'connected') {
+                if (connectionTimeout) clearTimeout(connectionTimeout);
                 statusText.innerText = 'CONNECTED! Starting game...';
+                statusText.style.color = '#0f0';
                 this.startGame();
+            } else if (state === 'failed' || state === 'closed') {
+                statusText.style.color = '#f00';
             }
         });
     }

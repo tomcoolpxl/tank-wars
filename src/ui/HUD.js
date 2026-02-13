@@ -39,19 +39,23 @@ export class HUD {
         this.container.add([this.timerText, this.timerLabel]);
 
         // Wind
-        this.windLabel = this.scene.add.text(400, 100, 'WIND', { font: '12px monospace', fill: textColor }).setOrigin(0.5, 0.5);
-        this.windText = this.scene.add.text(400, 115, '0', fontStyle).setOrigin(0.5, 0.5);
-        this.windBarBG = this.scene.add.graphics();
-        this.windBarBG.lineStyle(1, 0x00ffff, 0.5);
-        this.windBarBG.strokeRect(400 - 50, 130, 100, 6);
-        this.windBar = this.scene.add.graphics();
-        this.container.add([this.windLabel, this.windText, this.windBarBG, this.windBar]);
+        this.windLabel = this.scene.add.text(400, 90, 'WIND', { font: '12px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.windText = this.scene.add.text(400, 105, '0', fontStyle).setOrigin(0.5, 0.5);
+        this.windArrow = this.scene.add.graphics();
+        this.container.add([this.windLabel, this.windText, this.windArrow]);
 
         // Angle and Power (Bottom Left for current player)
-        this.statsContainer = this.scene.add.container(20, 540);
+        this.statsContainer = this.scene.add.container(20, 520);
         this.angleText = this.scene.add.text(0, 0, 'ANGLE: 45°', fontStyle);
         this.powerText = this.scene.add.text(0, 25, 'POWER: 50', fontStyle);
-        this.statsContainer.add([this.angleText, this.powerText]);
+        
+        // Power Bar
+        this.powerBarBG = this.scene.add.graphics();
+        this.powerBarBG.fillStyle(0x333333);
+        this.powerBarBG.fillRect(0, 50, 150, 10);
+        this.powerBar = this.scene.add.graphics();
+        
+        this.statsContainer.add([this.angleText, this.powerText, this.powerBarBG, this.powerBar]);
         this.container.add(this.statsContainer);
 
         // Turn Indicator
@@ -88,15 +92,39 @@ export class HUD {
 
         // Update wind
         this.windText.setText(rules.wind > 0 ? `+${rules.wind}` : rules.wind.toString());
-        this.windBar.clear();
-        this.windBar.fillStyle(0x00ffff, 0.8);
-        const windWidth = (rules.wind / 15) * 50;
-        this.windBar.fillRect(400, 131, windWidth, 4);
+        this.windArrow.clear();
+        if (rules.wind !== 0) {
+            const isRight = rules.wind > 0;
+            const arrowColor = 0x00ffff;
+            const arrowSize = Math.min(10 + Math.abs(rules.wind) * 3, 40);
+            const xBase = 400;
+            const yBase = 125;
+            
+            this.windArrow.lineStyle(2, arrowColor, 0.8);
+            this.windArrow.fillStyle(arrowColor, 0.8);
+            
+            // Draw arrow line
+            const xEnd = isRight ? xBase + arrowSize : xBase - arrowSize;
+            this.windArrow.lineBetween(xBase, yBase, xEnd, yBase);
+            
+            // Draw arrow head
+            const headSize = 6;
+            if (isRight) {
+                this.windArrow.fillTriangle(xEnd, yBase, xEnd - headSize, yBase - headSize/2, xEnd - headSize, yBase + headSize/2);
+            } else {
+                this.windArrow.fillTriangle(xEnd, yBase, xEnd + headSize, yBase - headSize/2, xEnd + headSize, yBase + headSize/2);
+            }
+        }
 
         // Update active player stats
         const activeTank = simulation.tanks[activePlayerIndex];
         this.angleText.setText(`ANGLE: ${activeTank.aimAngle}°`);
         this.powerText.setText(`POWER: ${activeTank.aimPower}`);
+        
+        // Update Power Bar
+        this.powerBar.clear();
+        this.powerBar.fillStyle(isLocalTurn ? 0x00ffff : 0x888888, 0.8);
+        this.powerBar.fillRect(0, 50, (activeTank.aimPower / 100) * 150, 10);
         
         // Position stats near active player's side or just keep fixed
         // For now, keep fixed but update color
