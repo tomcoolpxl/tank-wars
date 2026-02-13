@@ -27,7 +27,10 @@ export class LobbyScene extends Phaser.Scene {
                 <div id="host-section" style="display: none; margin-top: 20px;">
                     <p>1. Copy this offer and send it to your opponent:</p>
                     <textarea id="offer-out" readonly style="width: 100%; height: 100px; background: #111; color: #0f0; border: 1px solid #0f0;"></textarea>
-                    <button id="btn-copy-offer" style="margin-top: 5px; background: #000; color: #0f0; border: 1px solid #0f0; cursor: pointer;">Copy Offer</button>
+                    <div style="margin-top: 5px;">
+                        <button id="btn-copy-offer" style="background: #000; color: #0f0; border: 1px solid #0f0; padding: 5px; cursor: pointer;">Copy Offer</button>
+                        <button id="btn-copy-link" style="background: #000; color: #ff0; border: 1px solid #ff0; padding: 5px; cursor: pointer;">Copy Invite Link</button>
+                    </div>
                     <p style="margin-top: 20px;">2. Paste the answer from your opponent here:</p>
                     <textarea id="answer-in" style="width: 100%; height: 100px; background: #111; color: #0f0; border: 1px solid #0f0;"></textarea>
                     <button id="btn-connect-host" style="margin-top: 5px; background: #000; color: #0f0; border: 1px solid #0f0; cursor: pointer;">Connect</button>
@@ -65,6 +68,26 @@ export class LobbyScene extends Phaser.Scene {
         const iceStatus = document.getElementById('ice-status');
         const iceCount = document.getElementById('ice-count');
         const btnCancel = document.getElementById('btn-cancel');
+
+        // Check for offer in URL hash
+        const checkHash = () => {
+            const hash = window.location.hash;
+            if (hash.startsWith('#offer=')) {
+                const encodedOffer = hash.substring(7);
+                try {
+                    const decodedOffer = atob(encodedOffer);
+                    initialActions.style.display = 'none';
+                    joinSection.style.display = 'block';
+                    btnCancel.style.display = 'inline-block';
+                    document.getElementById('offer-in').value = decodedOffer;
+                    statusText.innerText = 'Offer loaded from link. Click "Create Answer".';
+                } catch (e) {
+                    console.error('Failed to decode offer from URL');
+                }
+            }
+        };
+
+        checkHash();
 
         let connectionTimeout = null;
         const startTimeout = () => {
@@ -114,6 +137,15 @@ export class LobbyScene extends Phaser.Scene {
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
             statusText.innerText = 'Offer copied to clipboard!';
+        });
+
+        document.getElementById('btn-copy-link').addEventListener('click', () => {
+            const offer = document.getElementById('offer-out').value;
+            if (!offer) return;
+            const encoded = btoa(offer);
+            const url = window.location.origin + window.location.pathname + '#offer=' + encoded;
+            navigator.clipboard.writeText(url);
+            statusText.innerText = 'Invite link copied to clipboard!';
         });
 
         document.getElementById('btn-connect-host').addEventListener('click', async () => {

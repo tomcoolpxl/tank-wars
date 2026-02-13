@@ -54,17 +54,25 @@ while (sim.rules.turnTimer > 1) { // Stop just before 0
     sim.step({});
 }
 
-// Next step should trigger fire
+// Next step should NOT trigger fire automatically anymore (Phase 8 review change)
 if (sim.rules.state !== GameState.TURN_AIM) {
     console.error("FAIL: State changed too early");
 }
 
-sim.step({}); // Timer hits 0 -> Fire
+sim.step({}); // Timer hits 0
 
-if (sim.rules.state !== GameState.PROJECTILE_FLIGHT) {
-    console.error(`FAIL: Auto-fire did not trigger. State: ${sim.rules.state}, Timer: ${sim.rules.turnTimer}`);
+if (sim.rules.state !== GameState.TURN_AIM) {
+    console.error("FAIL: Simulation should not auto-fire anymore.");
     process.exit(1);
 }
-console.log("PASS: Auto-fire triggered.");
+
+// Manually trigger fire as GameScene would do for the active player
+sim.fire(activeTank.aimAngle, activeTank.aimPower, sim.rules.activePlayerIndex);
+
+if (sim.rules.state !== GameState.PROJECTILE_FLIGHT) {
+    console.error(`FAIL: Fire did not trigger flight. State: ${sim.rules.state}`);
+    process.exit(1);
+}
+console.log("PASS: Fire triggered manually after timeout.");
 
 console.log("Phase 3 verification complete.");

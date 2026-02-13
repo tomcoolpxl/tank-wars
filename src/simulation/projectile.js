@@ -1,4 +1,4 @@
-import { FP, GRAVITY_FP, PROJECTILE_LIFETIME_TICKS } from './constants.js';
+import { FP, GRAVITY_FP, PROJECTILE_LIFETIME_TICKS, WIND_ACCEL_FP } from './constants.js';
 import { getSin, getCos } from './trigLUT.js';
 import { mulFP } from './fixed.js';
 
@@ -23,9 +23,9 @@ export class Projectile {
         
         this.g_per_tick_fp = Math.floor(GRAVITY_FP / 3600);
         
-        // ax_wind = wind * 0.5 units/s^2. FP = 10000.
-        // ax_wind_fp = wind * 0.5 * 10000 = wind * 5000.
-        this.ax_wind_tick_fp = Math.floor((wind * 5000) / 3600);
+        // Use the WIND_ACCEL_FP constant (acceleration units per unit of wind)
+        // ax_wind_tick_fp = (wind * WIND_ACCEL_FP) / (60 * 60)
+        this.ax_wind_tick_fp = Math.floor((wind * WIND_ACCEL_FP) / 3600);
     }
 
     step(terrain, tanks) {

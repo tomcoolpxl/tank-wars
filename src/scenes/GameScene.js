@@ -226,6 +226,10 @@ export class GameScene extends Phaser.Scene {
                     this.explosionRenderer.playExplosion(event.x, event.y);
                     // Update terrain visual
                     this.terrainRenderer.render(this.simulation.terrain);
+                } else if (event.type === 'out-of-bounds') {
+                    this.hud.showStatus('OUT OF BOUNDS', 2000);
+                } else if (event.type === 'timeout') {
+                    this.hud.showStatus('PROJECTILE TIMEOUT', 2000);
                 }
             }
 

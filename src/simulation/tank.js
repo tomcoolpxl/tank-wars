@@ -78,8 +78,8 @@ export class Tank {
         }
         
         // Update stability
-        // Thresholds adjusted for higher FP (10 FP units = 0.001 pixels/tick)
-        if (Math.abs(this.vx_fp) < 100 && Math.abs(this.vy_fp) < 100) {
+        // Thresholds adjusted for higher FP (1000 FP units = 0.001 pixels/tick)
+        if (Math.abs(this.vx_fp) < 1000 && Math.abs(this.vy_fp) < 1000) {
             this.stable = true;
         } else {
             this.stable = false;
@@ -100,24 +100,31 @@ export class Tank {
         // tan(30) = 0.577. 0.577 * 4 = 2.308. So |dh| > 2 is approx 30 deg.
         if (dh_abs > 2) {
             // Slide!
-            // a = g * (sin(theta) - mu_k * cos(theta))
             const dist_sq_fp = (dx * dx + dh_abs * dh_abs) * FP * FP;
             const dist_fp = isqrt(dist_sq_fp);
             
             const sin_fp = Math.floor((dh_abs * FP * FP) / dist_fp);
-            const cos_fp = Math.floor((dx * FP * FP) / dist_fp);
             
-            const friction_comp_fp = mulFP(FRICTION_KINETIC_FP, cos_fp);
+            // Requirement 4.4: a_eff = a_down * (1 - mu_k)
+            // a_down = g * sin(theta)
+            const a_down_fp = mulFP(GRAVITY_FP, sin_fp);
+            const one_minus_mu_k_fp = FP - FRICTION_KINETIC_FP;
+            let accel_fp = mulFP(a_down_fp, one_minus_mu_k_fp);
             
-            let accel_fp = (GRAVITY_FP * (sin_fp - friction_comp_fp)) / FP;
             // Convert from units/s^2 to units/tick^2
             accel_fp = Math.floor(accel_fp / 3600);
             
             const slideDir = dh > 0 ? -1 : 1;
             this.vx_fp += slideDir * accel_fp;
         } else {
-            // Friction
-            this.vx_fp = Math.floor(this.vx_fp * 800 / 1000); // 0.8 friction
+            // Friction deceleration on flat ground
+            // a = mu_k * g
+            const friction_decel_fp = Math.floor(mulFP(FRICTION_KINETIC_FP, GRAVITY_FP) / 3600);
+            if (this.vx_fp > 0) {
+                this.vx_fp = Math.max(0, this.vx_fp - friction_decel_fp);
+            } else if (this.vx_fp < 0) {
+                this.vx_fp = Math.min(0, this.vx_fp + friction_decel_fp);
+            }
         }
     }
 }

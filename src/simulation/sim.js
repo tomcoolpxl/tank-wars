@@ -60,11 +60,6 @@ export class Simulation {
                 if (activeTank.aimAngle > 180) activeTank.aimAngle = 180;
                 if (activeTank.aimPower < 0) activeTank.aimPower = 0;
                 if (activeTank.aimPower > 100) activeTank.aimPower = 100;
-
-                // Auto-fire on timeout
-                if (this.rules.turnTimer <= 0) {
-                    this.fire(activeTank.aimAngle, activeTank.aimPower, this.rules.activePlayerIndex);
-                }
                 break;
 
             case GameState.PROJECTILE_FLIGHT:
@@ -74,6 +69,8 @@ export class Simulation {
                         if (result.type === 'explosion') {
                             applyExplosion(result.x, result.y, this.terrain, this.tanks);
                             this.events.push({ type: 'explosion', x: result.x, y: result.y });
+                        } else {
+                            this.events.push(result);
                         }
                         this.projectile = null;
                         this.rules.state = GameState.POST_EXPLOSION_STABILIZE;

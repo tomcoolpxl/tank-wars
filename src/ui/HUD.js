@@ -62,6 +62,10 @@ export class HUD {
         this.turnIndicator = this.scene.add.text(400, 170, 'YOUR TURN', { font: 'bold 24px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
         this.container.add(this.turnIndicator);
 
+        // Status Message (e.g., "Out of Bounds")
+        this.statusText = this.scene.add.text(400, 250, '', { font: 'bold 32px monospace', fill: '#ff00ff' }).setOrigin(0.5, 0.5).setVisible(false);
+        this.container.add(this.statusText);
+
         // Debug Info
         this.debugText = this.scene.add.text(10, 580, '', { font: '12px monospace', fill: '#ffffff' });
         this.container.add(this.debugText);
@@ -175,5 +179,16 @@ export class HUD {
 
         graphics.fillStyle(color);
         graphics.fillRect(x, y, (health / 100) * 200, 15);
+    }
+
+    showStatus(text, duration = 2000) {
+        this.statusText.setText(text);
+        this.statusText.setVisible(true);
+        
+        if (this.statusTimer) this.statusTimer.remove();
+        
+        this.statusTimer = this.scene.time.delayedCall(duration, () => {
+            this.statusText.setVisible(false);
+        });
     }
 }
