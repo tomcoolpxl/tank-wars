@@ -59,8 +59,24 @@
 - [x] Add shot recording and replay functionality to `GameScene`.
 - [x] Keybinds for dev mode: 'P' to print replay, 'R' to restart with replay.
 
+## Phase 7: Visual polish (still deterministic-safe) - COMPLETED
+- [x] Multi-stroke glow technique for terrain, tanks, and projectiles.
+- [x] Subtle flicker effect (render-only) for neon look.
+- [x] Enhanced explosion particles and multiple expanding rings.
+- [x] Projectile trail (visual-only history).
+- [x] Performance-optimized terrain redraw.
+
+## Phase 8: Packaging for GitHub Pages and reliability pass - COMPLETED
+- [x] Stable build verified with Vite.
+- [x] Configured `vite.config.js` with relative base paths for GitHub Pages.
+- [x] Added connection troubleshooting UI (ICE status and candidate count).
+- [x] Added "Copy to clipboard" buttons for signaling strings.
+- [x] Comprehensive README with hosting, connection, and troubleshooting instructions.
+
 ## Current State
-- Full P2P connectivity via manual signaling is implemented.
+- Full P2P connectivity via manual signaling is implemented with troubleshooting tools.
 - The game features a complete neon-themed HUD showing vital game information.
 - Turn-based logic is fully functional with authoritative timing and remote shot sync.
 - Game over conditions are detected and displayed to both players.
+- Enhanced neon vector visuals with glows, flickers, and polished effects.
+- Project is ready for deployment to GitHub Pages.

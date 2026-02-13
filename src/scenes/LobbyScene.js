@@ -45,7 +45,10 @@ export class LobbyScene extends Phaser.Scene {
                 </div>
 
                 <div id="status" style="margin-top: 20px; border-top: 1px solid #0f0; padding-top: 10px;">
-                    Status: <span id="status-text">Waiting...</span>
+                    <div>Status: <span id="status-text">Waiting...</span></div>
+                    <div style="font-size: 10px; margin-top: 5px; color: #0a0;">
+                        ICE: <span id="ice-status">new</span> | Candidates: <span id="ice-count">0</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -58,6 +61,13 @@ export class LobbyScene extends Phaser.Scene {
         const joinSection = document.getElementById('join-section');
         const initialActions = document.getElementById('initial-actions');
         const statusText = document.getElementById('status-text');
+        const iceStatus = document.getElementById('ice-status');
+        const iceCount = document.getElementById('ice-count');
+
+        this.networkManager.onIceUpdate((state, count) => {
+            iceStatus.innerText = state;
+            iceCount.innerText = count;
+        });
 
         btnHost.addEventListener('click', async () => {
             initialActions.style.display = 'none';

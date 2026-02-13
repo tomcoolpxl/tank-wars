@@ -3,22 +3,68 @@ import { FP } from '../simulation/constants.js';
 export class ProjectileRenderer {
     constructor(scene) {
         this.scene = scene;
-        this.graphics = this.scene.add.graphics();
-        this.graphics.setDepth(20);
+        this.glowOuter = this.scene.add.graphics();
+        this.glowInner = this.scene.add.graphics();
+        this.main = this.scene.add.graphics();
+        this.trail = this.scene.add.graphics();
+        
+        this.glowOuter.setDepth(19);
+        this.glowInner.setDepth(20);
+        this.main.setDepth(21);
+        this.trail.setDepth(18);
+        
+        this.trailPoints = [];
+        this.maxTrailPoints = 20;
     }
 
     render(projectile) {
-        this.graphics.clear();
+        this.main.clear();
+        this.glowInner.clear();
+        this.glowOuter.clear();
         
-        if (!projectile) return;
+        if (!projectile) {
+            this.trail.clear();
+            this.trailPoints = [];
+            return;
+        }
         
         const x = projectile.x_fp / FP;
         const y = projectile.y_fp / FP;
         
-        this.graphics.fillStyle(0xffffff);
-        this.graphics.fillCircle(x, y, 3);
+        // Add to trail
+        this.trailPoints.push({ x, y });
+        if (this.trailPoints.length > this.maxTrailPoints) {
+            this.trailPoints.shift();
+        }
         
-        // Optional: Trail? Phase 7 says "Optional projectile trail".
-        // Keep it simple for Phase 2.
+        // Draw trail
+        this.trail.clear();
+        if (this.trailPoints.length > 1) {
+            this.trail.lineStyle(2, 0xffffff, 0.3);
+            this.trail.beginPath();
+            this.trail.moveTo(this.trailPoints[0].x, this.trailPoints[0].y);
+            for (let i = 1; i < this.trailPoints.length; i++) {
+                this.trail.lineTo(this.trailPoints[i].x, this.trailPoints[i].y);
+            }
+            this.trail.strokePath();
+        }
+        
+        const color = 0xffffff;
+        
+        this.main.fillStyle(color, 1.0);
+        this.main.fillCircle(x, y, 3);
+        
+        this.glowInner.fillStyle(color, 0.4);
+        this.glowInner.fillCircle(x, y, 6);
+        
+        this.glowOuter.fillStyle(color, 0.15);
+        this.glowOuter.fillCircle(x, y, 12);
+    }
+
+    update(time) {
+        const flicker = 0.8 + Math.random() * 0.2;
+        this.main.alpha = flicker;
+        this.glowInner.alpha = flicker * 0.6;
+        this.glowOuter.alpha = flicker * 0.3;
     }
 }

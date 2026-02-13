@@ -4,7 +4,9 @@ export class NetworkManager {
         this.dataChannel = null;
         this.onMessageCallback = null;
         this.onConnectionStateChangeCallback = null;
+        this.onIceUpdateCallback = null;
         this.isHost = false;
+        this.iceCandidatesCount = 0;
 
         this.config = {
             iceServers: [
@@ -72,10 +74,26 @@ export class NetworkManager {
 
     setupPeerConnection() {
         this.peerConnection = new RTCPeerConnection(this.config);
+        this.iceCandidatesCount = 0;
 
         this.peerConnection.onconnectionstatechange = () => {
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback(this.peerConnection.connectionState);
+            }
+        };
+
+        this.peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                this.iceCandidatesCount++;
+            }
+            if (this.onIceUpdateCallback) {
+                this.onIceUpdateCallback(this.peerConnection.iceGatheringState, this.iceCandidatesCount);
+            }
+        };
+
+        this.peerConnection.onicegatheringstatechange = () => {
+            if (this.onIceUpdateCallback) {
+                this.onIceUpdateCallback(this.peerConnection.iceGatheringState, this.iceCandidatesCount);
             }
         };
 
@@ -120,5 +138,9 @@ export class NetworkManager {
 
     onConnectionStateChange(callback) {
         this.onConnectionStateChangeCallback = callback;
+    }
+
+    onIceUpdate(callback) {
+        this.onIceUpdateCallback = callback;
     }
 }

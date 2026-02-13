@@ -4,32 +4,55 @@ export class TerrainRenderer {
     constructor(scene) {
         this.scene = scene;
         this.graphics = scene.add.graphics();
-        // Move to back so tanks/projectiles are on top
-        this.graphics.setDepth(0);
+        this.glowGraphics = [
+            scene.add.graphics(),
+            scene.add.graphics()
+        ];
+        
+        // Order: glow furthest to back, then main line
+        this.glowGraphics[1].setDepth(0);
+        this.glowGraphics[0].setDepth(1);
+        this.graphics.setDepth(2);
     }
 
     render(terrain) {
         // Redraw terrain
         this.graphics.clear();
-        this.graphics.fillStyle(0x383838);
-        this.graphics.lineStyle(2, 0x00ff00);
+        this.glowGraphics[0].clear();
+        this.glowGraphics[1].clear();
 
-        this.graphics.beginPath();
-        this.graphics.moveTo(0, HEIGHT);
+        const color = 0x00ff00;
         
-        for (let i = 0; i < terrain.heights.length; i++) {
+        // Main line
+        this.graphics.lineStyle(2, color, 1.0);
+        this.drawTerrainPath(this.graphics, terrain);
+        
+        // Inner glow
+        this.glowGraphics[0].lineStyle(6, color, 0.3);
+        this.drawTerrainPath(this.glowGraphics[0], terrain);
+        
+        // Outer glow
+        this.glowGraphics[1].lineStyle(12, color, 0.1);
+        this.drawTerrainPath(this.glowGraphics[1], terrain);
+    }
+
+    drawTerrainPath(graphics, terrain) {
+        graphics.beginPath();
+        graphics.moveTo(0, terrain.heights[0]);
+        
+        for (let i = 1; i < terrain.heights.length; i++) {
             const x = i * TERRAIN_STEP;
             const y = terrain.heights[i];
-            this.graphics.lineTo(x, y);
+            graphics.lineTo(x, y);
         }
-        
-        // Ensure the shape closes properly at the bottom right
-        const lastX = (terrain.heights.length - 1) * TERRAIN_STEP;
-        this.graphics.lineTo(lastX, HEIGHT);
-        this.graphics.lineTo(WIDTH, HEIGHT);
-        this.graphics.closePath();
-        
-        this.graphics.fillPath();
-        this.graphics.strokePath();
+        graphics.strokePath();
+    }
+
+    update(time) {
+        // Subtle flicker
+        const flicker = 0.8 + Math.random() * 0.2;
+        this.graphics.alpha = flicker;
+        this.glowGraphics[0].alpha = flicker * 0.6;
+        this.glowGraphics[1].alpha = flicker * 0.3;
     }
 }

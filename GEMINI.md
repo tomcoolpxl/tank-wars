@@ -11,6 +11,8 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 - **Phase 4 (Networking):** COMPLETE.
 - **Phase 5 (HUD & UX):** COMPLETE.
 - **Phase 6 (Determinism Harness):** COMPLETE.
+- **Phase 7 (Visual Polish):** COMPLETE.
+- **Phase 8 (Packaging & Reliability):** COMPLETE.
 
 ## Architecture
 - **`src/simulation/`**: Pure logic core.
@@ -30,6 +32,10 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 - **`src/ui/`**: UI components.
     - `HUD.js`: Game overlay (health, stats, timer, game over).
 - **`src/render/`**: Phaser-specific rendering helpers.
+    - `TerrainRenderer.js`: Neon polyline and glow for terrain.
+    - `TankRenderer.js`: Container-based tank with glow and health.
+    - `ProjectileRenderer.js`: Projectile with glow and trail.
+    - `ExplosionRenderer.js`: Neon expanding rings and particles.
 - **`src/scenes/`**: Phaser scenes (`LobbyScene`, `GameScene`).
 - **`src/main.js`**: Phaser entry point.
 - **`tests/`**: Standalone deterministic logic tests.

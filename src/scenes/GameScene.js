@@ -175,6 +175,11 @@ export class GameScene extends Phaser.Scene {
         // Update HUD
         this.hud.update(this.simulation, this.localPlayerIndex);
 
+        // Apply visual effects (flicker, etc)
+        this.terrainRenderer.update(time);
+        this.tankRenderer.update(time);
+        this.projectileRenderer.update(time);
+
         if (Phaser.Input.Keyboard.JustDown(this.pKey)) {
             console.log('--- REPLAY DATA ---');
             console.log('Seed:', this.seed);

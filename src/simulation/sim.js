@@ -60,6 +60,11 @@ export class Simulation {
                 if (activeTank.aimAngle > 180) activeTank.aimAngle = 180;
                 if (activeTank.aimPower < 0) activeTank.aimPower = 0;
                 if (activeTank.aimPower > 100) activeTank.aimPower = 100;
+
+                // Auto-fire on timeout
+                if (this.rules.turnTimer <= 0) {
+                    this.fire(activeTank.aimAngle, activeTank.aimPower);
+                }
                 break;
 
             case GameState.PROJECTILE_FLIGHT:
