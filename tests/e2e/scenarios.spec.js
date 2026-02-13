@@ -118,7 +118,7 @@ test.describe('Advanced Game Scenarios', () => {
     await hostPage.evaluate(() => {
         const gameScene = window.game.scene.getScene('GameScene');
         const activeTank = gameScene.simulation.tanks[0];
-        activeTank.aimAngle = 135;
+        activeTank.aimAngle = 90;
         activeTank.aimPower = 100;
     });
     await hostPage.keyboard.press('Space');

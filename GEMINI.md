@@ -17,17 +17,17 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 
 ## Architecture
 - **`src/simulation/`**: Pure logic core.
-    - `constants.js`: Global config (FP=10000, integer-based constants).
+    - `constants.js`: Global config (FP=1000000, extreme gravity=25.0).
     - `fixed.js`: Fixed-point math.
     - `rng.js`: Deterministic PRNG.
     - `trigLUT.js`: Precomputed sin/cos.
     - `isqrt.js`: Integer square root (used for physics/explosions).
     - `terrain.js`: Heightmap and deformation.
-    - `tank.js`: Tank physics (improved slope-based sliding).
-    - `projectile.js`: Projectile physics (self-collision protection).
+    - `tank.js`: Non-movable platform physics (tilts with terrain, no sliding).
+    - `projectile.js`: Projectile physics (self-collision protection, high gravity).
     - `explosion.js`: Damage and crater logic.
     - `rules.js`: Turn-based state machine.
-    - `sim.js`: Main Simulation API (includes state serialization for resync).
+    - `sim.js`: Main Simulation API (includes state serialization and auto-fire).
 - **`src/net/`**: WebRTC P2P networking.
 - **`src/ui/`**: UI components (HUD, Lobby).
 - **`src/render/`**: Phaser-specific rendering helpers.

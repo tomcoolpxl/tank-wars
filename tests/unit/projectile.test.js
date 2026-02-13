@@ -25,12 +25,13 @@ describe('Projectile Physics', () => {
         expect(p.active).toBe(false);
     });
 
-    it('should collide with tanks', () => {
+    it('should collide with tanks (dome shape)', () => {
         const terrain = new Terrain();
+        // Tank at 200, 150. Dome is ty to ty+12.
         const tank = new Tank(0, 200 * FP, 150 * FP);
         
-        // Projectile moving through tank
-        const p = new Projectile(200 * FP, 151 * FP, 0, 0, 0);
+        // Projectile moving through tank dome at height 155
+        const p = new Projectile(200 * FP, 156 * FP, 0, 0, 0);
         p.vy_fp = -1 * FP;
 
         const result = p.step(terrain, [tank]);
@@ -61,14 +62,16 @@ describe('Projectile Physics', () => {
     it('should ignore self-collision initially but allow it later', () => {
         const shooter = new Tank(0, 100 * FP, 100 * FP);
         const target = new Tank(1, 200 * FP, 200 * FP);
-        const p = new Projectile(100 * FP, 100 * FP, 90, 0, 0, 0);
+        // Start inside the dome (y=105)
+        const p = new Projectile(100 * FP, 105 * FP, 90, 0, 0, 0);
         
         // Ticks 0-4: ignore self
         for (let i = 0; i < 4; i++) {
             expect(p.step(new Terrain(), [shooter, target])).toBeNull();
         }
         
-        // Tick 5+: hit self
+        // Tick 5+: hit self (we need it to still be inside the dome)
+        p.vy_fp = 0; // stop it from flying out too fast for the test
         const result = p.step(new Terrain(), [shooter, target]);
         expect(result.type).toBe('explosion');
     });

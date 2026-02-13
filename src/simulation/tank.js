@@ -12,11 +12,12 @@ export class Tank {
         this.vy_fp = 0;
         this.health = 100;
         this.alive = true;
-        this.angle_deg = 0; // Visual rotation
+        this.baseAngleDeg = 0; // Deterministic rotation in degrees
         this.stable = false;
         
         // Aiming state (Phase 3)
-        this.aimAngle = 45; // integer degrees
+        // Now relative to the base (0 is flat right, 90 is up, 180 is flat left)
+        this.aimAngle = 90; // integer degrees, relative to platform
         this.aimPower = 50; // integer 0..100
         
         // Per-tick gravity in fixed-point
@@ -48,18 +49,29 @@ export class Tank {
             // On ground
             this.y_fp = (groundY + (TANK_HEIGHT / 2)) * FP;
             this.vy_fp = 0;
+            this.vx_fp = 0; // No horizontal movement
             
-            // Check for sliding
-            this.applySliding(terrain, x);
+            // Calculate slope for rotation
+            const hL = terrain.getHeightAtX(x - 4);
+            const hR = terrain.getHeightAtX(x + 4);
+            // angle = atan2(dy, dx)
+            this.baseAngleDeg = Math.floor(Math.atan2(hR - hL, 8) * 180 / Math.PI);
         } else if (tankBottomY > groundY) {
             // In air
             this.vy_fp -= this.g_per_tick_fp;
+            this.vx_fp = 0; // Fall straight down
             this.stable = false;
+            this.baseAngleDeg = 0;
         } else {
             // Below ground (after terrain removal)
             this.y_fp = (groundY + (TANK_HEIGHT / 2)) * FP;
             this.vy_fp = 0;
+            this.vx_fp = 0;
             this.stable = false;
+            
+            const hL = terrain.getHeightAtX(x - 4);
+            const hR = terrain.getHeightAtX(x + 4);
+            this.baseAngleDeg = Math.floor(Math.atan2(hR - hL, 8) * 180 / Math.PI);
         }
 
         this.x_fp += this.vx_fp;
@@ -83,48 +95,6 @@ export class Tank {
             this.stable = true;
         } else {
             this.stable = false;
-        }
-    }
-
-    applySliding(terrain, x) {
-        // 4.3 Slope alignment & 4.4 Movement: sliding
-        // Index difference of 2 samples = 4 pixels
-        const hL = terrain.getHeightAtX(x - 2);
-        const hR = terrain.getHeightAtX(x + 2);
-        const dh = hR - hL;
-        const dx = 4;
-        
-        const dh_abs = Math.abs(dh);
-        
-        // Threshold: |dh/dx| > tan(FRICTION_STATIC_THRESHOLD)
-        // tan(30) = 0.577. 0.577 * 4 = 2.308. So |dh| > 2 is approx 30 deg.
-        if (dh_abs > 2) {
-            // Slide!
-            const dist_sq_fp = (dx * dx + dh_abs * dh_abs) * FP * FP;
-            const dist_fp = isqrt(dist_sq_fp);
-            
-            const sin_fp = Math.floor((dh_abs * FP * FP) / dist_fp);
-            
-            // Requirement 4.4: a_eff = a_down * (1 - mu_k)
-            // a_down = g * sin(theta)
-            const a_down_fp = mulFP(GRAVITY_FP, sin_fp);
-            const one_minus_mu_k_fp = FP - FRICTION_KINETIC_FP;
-            let accel_fp = mulFP(a_down_fp, one_minus_mu_k_fp);
-            
-            // Convert from units/s^2 to units/tick^2
-            accel_fp = Math.floor(accel_fp / 3600);
-            
-            const slideDir = dh > 0 ? -1 : 1;
-            this.vx_fp += slideDir * accel_fp;
-        } else {
-            // Friction deceleration on flat ground
-            // a = mu_k * g
-            const friction_decel_fp = Math.floor(mulFP(FRICTION_KINETIC_FP, GRAVITY_FP) / 3600);
-            if (this.vx_fp > 0) {
-                this.vx_fp = Math.max(0, this.vx_fp - friction_decel_fp);
-            } else if (this.vx_fp < 0) {
-                this.vx_fp = Math.min(0, this.vx_fp + friction_decel_fp);
-            }
         }
     }
 }

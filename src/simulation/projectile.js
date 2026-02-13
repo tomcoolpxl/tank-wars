@@ -65,10 +65,9 @@ export class Projectile {
             const tx = Math.floor(tank.x_fp / FP);
             const ty = Math.floor(tank.y_fp / FP);
             
-            const halfW = 12; // TANK_WIDTH / 2
-            const halfH = 6;  // TANK_HEIGHT / 2
-            
-            if (x >= tx - halfW && x <= tx + halfW && y >= ty - halfH && y <= ty + halfH) {
+            // Dome collision: bounding box for now, could be distance-based
+            // Width: 24 (tx-12 to tx+12), Height: 12 (ty to ty+12)
+            if (x >= tx - 12 && x <= tx + 12 && y >= ty && y <= ty + 12) {
                 this.active = false;
                 return { type: 'explosion', x, y };
             }

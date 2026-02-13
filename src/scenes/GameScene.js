@@ -36,6 +36,7 @@ export class GameScene extends Phaser.Scene {
         this.replayIndex = 0;
         
         this.lastTurnNumber = 0;
+        this.lastGameState = null;
     }
 
     create() {
@@ -43,6 +44,7 @@ export class GameScene extends Phaser.Scene {
         this.simulation = new Simulation(this.seed);
         this.simulation.start();
         this.lastTurnNumber = this.simulation.rules.turnNumber;
+        this.lastGameState = this.simulation.rules.state;
 
         // Listen for network messages
         if (this.networkManager) {
@@ -195,10 +197,29 @@ export class GameScene extends Phaser.Scene {
                 this.lastTurnNumber = this.simulation.rules.turnNumber;
             }
 
+            // Check for auto-fire (only active player enforces this)
+            if (!this.isReplaying && isMyTurn && isAiming && this.simulation.rules.turnTimer <= 0) {
+                const activeTank = this.simulation.tanks[this.localPlayerIndex];
+                const shotData = {
+                    type: 'SHOT',
+                    turnNumber: this.simulation.rules.turnNumber,
+                    angle: activeTank.aimAngle,
+                    power: activeTank.aimPower
+                };
+                this.networkManager.send(shotData);
+                this.recordShot(activeTank.aimAngle, activeTank.aimPower);
+                this.simulation.fire(activeTank.aimAngle, activeTank.aimPower, this.localPlayerIndex);
+            }
+
+            // Detect state transition (e.g. from manual or auto fire)
+            if (this.simulation.rules.state !== this.lastGameState) {
+                this.lastGameState = this.simulation.rules.state;
+            }
+
             // Check for local fire
             if (!this.isReplaying && isMyTurn && isAiming) {
                 const activeTank = this.simulation.tanks[this.localPlayerIndex];
-                if (Phaser.Input.Keyboard.JustDown(this.spaceKey) || this.simulation.rules.turnTimer <= 0) {
+                if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                     const shotData = {
                         type: 'SHOT',
                         turnNumber: this.simulation.rules.turnNumber,

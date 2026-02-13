@@ -114,7 +114,7 @@ export class Simulation {
         this.projectile = new Projectile(
             activeTank.x_fp, 
             activeTank.y_fp, 
-            angle, 
+            activeTank.baseAngleDeg + angle, 
             power, 
             this.rules.wind,
             activeTank.id
@@ -144,6 +144,7 @@ export class Simulation {
                 vy_fp: t.vy_fp,
                 health: t.health,
                 alive: t.alive,
+                baseAngleDeg: t.baseAngleDeg,
                 aimAngle: t.aimAngle,
                 aimPower: t.aimPower
             })),
@@ -177,6 +178,7 @@ export class Simulation {
             t.vy_fp = s.vy_fp;
             t.health = s.health;
             t.alive = s.alive;
+            t.baseAngleDeg = s.baseAngleDeg;
             t.aimAngle = s.aimAngle;
             t.aimPower = s.aimPower;
         }
@@ -214,6 +216,7 @@ export class Simulation {
             hashInt(tank.vx_fp);
             hashInt(tank.vy_fp);
             hashInt(tank.health);
+            hashInt(tank.baseAngleDeg);
             hashInt(tank.aimAngle);
             hashInt(tank.aimPower);
             hashInt(tank.alive ? 1 : 0);

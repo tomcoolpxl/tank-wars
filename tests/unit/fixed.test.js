@@ -20,11 +20,11 @@ describe('Fixed-Point Math', () => {
         const b = 2.0 * FP;
         expect(divFP(a, b)).toBe(1.5 * FP);
 
-        // Round toward zero: 1 / 3 = 0.3333... -> 3333
-        expect(divFP(1 * FP, 3 * FP)).toBe(3333);
+        // Round toward zero: 1 / 3 = 0.3333... -> 333333
+        expect(divFP(1 * FP, 3 * FP)).toBe(333333);
         
         // Negative division
-        expect(divFP(-1 * FP, 3 * FP)).toBe(-3333);
+        expect(divFP(-1 * FP, 3 * FP)).toBe(-333333);
 
         // Division by zero
         expect(divFP(10 * FP, 0)).toBe(0);

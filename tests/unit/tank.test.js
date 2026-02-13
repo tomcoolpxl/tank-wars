@@ -20,15 +20,15 @@ describe('Tank Physics', () => {
         // Set terrain height to 50 at x=100
         for(let i=0; i<terrain.heights.length; i++) terrain.heights[i] = 50;
         
-        // Tank just above ground (bottom at 51, ground at 50)
-        // Tank center y = bottom + height/2 = 51 + 6 = 57
-        const tank = new Tank(0, 100 * FP, 57 * FP);
+        // Tank just above ground (bottom at 50.1, ground at 50)
+        // Tank center y = bottom + height/2 = 50.1 + 0 = 50.1
+        const tank = new Tank(0, 100 * FP, 50.1 * FP);
         tank.vy_fp = -1000; // Moving down
         
         tank.step(terrain);
         
-        // Should snap to ground: y = 50 + 6 = 56
-        expect(Math.floor(tank.y_fp / FP)).toBe(56);
+        // Should snap to ground: y = 50 + 0 = 50
+        expect(Math.floor(tank.y_fp / FP)).toBe(50);
         expect(tank.vy_fp).toBe(0);
     });
 
@@ -67,44 +67,33 @@ describe('Tank Physics', () => {
         const tank = new Tank(0, 100 * FP, 50 * FP);
         tank.step(terrain);
         
-        expect(Math.floor(tank.y_fp / FP)).toBe(106); // 100 + 6
+        expect(Math.floor(tank.y_fp / FP)).toBe(100); // 100 + 0
         expect(tank.vy_fp).toBe(0);
     });
 
-    it('should slide on steep slopes (downhill right)', () => {
+    it('should calculate rotation but NOT slide on steep slopes', () => {
         const terrain = new Terrain();
-        // hL=110 (x-2), hR=90 (x+2) -> dh = -20. slideDir = 1 (right)
+        // hL=110 (x-4), hR=90 (x+4) -> dh = -20
         terrain.heights.fill(100);
-        terrain.heights[98/2] = 110;
-        terrain.heights[102/2] = 90;
+        terrain.heights[(100-4)/2] = 110;
+        terrain.heights[(100+4)/2] = 90;
         
-        const tank = new Tank(0, 100 * FP, 106 * FP);
+        const tank = new Tank(0, 100 * FP, 100 * FP);
         tank.step(terrain);
-        expect(tank.vx_fp).toBeGreaterThan(0);
+        
+        expect(tank.vx_fp).toBe(0); // No sliding
+        expect(tank.baseAngleDeg).not.toBe(0);
     });
 
-    it('should slide on steep slopes (downhill left)', () => {
-        const terrain = new Terrain();
-        // hL=90 (x-2), hR=110 (x+2) -> dh = 20. slideDir = -1 (left)
-        terrain.heights.fill(100);
-        terrain.heights[98/2] = 90;
-        terrain.heights[102/2] = 110;
-        
-        const tank = new Tank(0, 100 * FP, 106 * FP);
-        tank.step(terrain);
-        expect(tank.vx_fp).toBeLessThan(0);
-    });
-
-    it('should apply friction on gentle slopes', () => {
+    it('should apply friction (stay still) on gentle slopes', () => {
         const terrain = new Terrain();
         terrain.heights.fill(100);
         
-        const tank = new Tank(0, 100 * FP, 106 * FP);
-        tank.vx_fp = 1000; // Moving
+        const tank = new Tank(0, 100 * FP, 100 * FP);
+        tank.vx_fp = 1000; // Moving initially (e.g. from explosion, though simulation doesn't add vx now)
         
         tank.step(terrain);
         
-        expect(tank.vx_fp).toBeLessThan(1000);
-        expect(tank.vx_fp).toBe(800); // 1000 * 0.8
+        expect(tank.vx_fp).toBe(0); // Forced to 0 in step() when on ground
     });
 });

@@ -16,9 +16,9 @@ Tank Wars follows a decoupled architecture where the **Deterministic Simulation 
 The simulation ensures that given the same seed and input sequence, the game state remains identical across all clients.
 
 ### Fixed-Point Math (`fixed.js`)
-- Uses a scaling factor (10,000) for "real" numbers.
+- Uses a scaling factor (1,000,000) for "real" numbers.
 - Employs `BigInt` for intermediate calculations to prevent precision loss and overflows.
-- Constants like `GRAVITY` and `FRICTION` are defined in fixed-point.
+- Constants like `GRAVITY` are defined in fixed-point.
 
 ### Trigonometry LUT (`trigLUT.js`)
 - Precomputed sine and cosine values for degrees 0-359.
@@ -33,8 +33,8 @@ The simulation ensures that given the same seed and input sequence, the game sta
 - **Destructible:** Crates are created using an integer square root (`isqrt.js`) algorithm to ensure crater shapes are identical on all peers.
 
 ### Physics (`tank.js`, `projectile.js`)
-- **Tanks:** Handle gravity and sliding on slopes. Collision detection uses the terrain heightmap.
-- **Projectiles:** Affected by wind (fixed-point) and gravity.
+- **Tanks:** Non-movable platforms that fall under gravity and tilt to match the terrain slope.
+- **Projectiles:** Affected by wind (fixed-point) and extreme gravity (25.0). Collision detection uses the terrain heightmap and tank domes.
 
 ---
 
@@ -87,7 +87,6 @@ Uses P2P WebRTC DataChannels for low-latency communication.
 
 ## 5. Key Constants (`src/simulation/constants.js`)
 
-- `PRECISION`: 10,000 (Fixed-point scaling).
+- `PRECISION`: 1,000,000 (Fixed-point scaling).
 - `WIDTH` / `HEIGHT`: 800x600 (Logical simulation bounds).
-- `TERRAIN_STEP`: 2 (Horizontal resolution of the terrain).
-- `TICK_DURATION_MS`: 16.66 (Target 60 FPS for simulation).
+- `GRAVITY_FP`: 25,000,000 (Extreme gravity).

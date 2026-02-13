@@ -10,7 +10,7 @@ export const TICK_RATE = 60;
 export const TICK_DURATION_MS = 1000 / TICK_RATE;
 
 // Physics constants in logical units/s^2 (multiplied by FP)
-export const GRAVITY_FP = 9800000; // 9.8 * 1,000,000
+export const GRAVITY_FP = 25000000; // 25.0 * 1,000,000 (was 9.8)
 
 // Terrain constants
 export const TERRAIN_STEP = 2;
@@ -20,7 +20,7 @@ export const TERRAIN_MAX_HEIGHT = 450;
 
 // Tank constants
 export const TANK_WIDTH = 24;
-export const TANK_HEIGHT = 12;
+export const TANK_HEIGHT = 0;
 export const FRICTION_STATIC_THRESHOLD = 30; // degrees
 export const FRICTION_KINETIC_FP = 200000; // 0.2 * 1,000,000
 export const TANK_SPAWN_LEFT_RANGE = [40, 320];

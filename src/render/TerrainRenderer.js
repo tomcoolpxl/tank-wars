@@ -38,11 +38,11 @@ export class TerrainRenderer {
 
     drawTerrainPath(graphics, terrain) {
         graphics.beginPath();
-        graphics.moveTo(0, terrain.heights[0]);
+        graphics.moveTo(0, HEIGHT - terrain.heights[0]);
         
         for (let i = 1; i < terrain.heights.length; i++) {
             const x = i * TERRAIN_STEP;
-            const y = terrain.heights[i];
+            const y = HEIGHT - terrain.heights[i];
             graphics.lineTo(x, y);
         }
         graphics.strokePath();
