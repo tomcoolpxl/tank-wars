@@ -60,11 +60,6 @@ export class Simulation {
                 if (activeTank.aimAngle > 180) activeTank.aimAngle = 180;
                 if (activeTank.aimPower < 0) activeTank.aimPower = 0;
                 if (activeTank.aimPower > 100) activeTank.aimPower = 100;
-
-                // Fire condition: Input space OR timer expired
-                if (inputs.fire || this.rules.turnTimer <= 0) {
-                    this.handleShot(activeTank.aimAngle, activeTank.aimPower);
-                }
                 break;
 
             case GameState.PROJECTILE_FLIGHT:
@@ -101,10 +96,13 @@ export class Simulation {
         }
     }
 
-    handleShot(angle, power) {
+    fire(angle, power) {
         if (this.rules.state !== GameState.TURN_AIM) return;
 
         const activeTank = this.tanks[this.rules.activePlayerIndex];
+        activeTank.aimAngle = angle;
+        activeTank.aimPower = power;
+
         this.projectile = new Projectile(
             activeTank.x_fp, 
             activeTank.y_fp, 
@@ -127,16 +125,50 @@ export class Simulation {
     }
 
     getStateHash() {
-        // Very basic hash for determinism checking
+        // More robust hash for determinism checking
         let h = 0;
+        const hashInt = (val) => {
+            h = (Math.imul(h, 31) + (val | 0)) | 0;
+        };
+
+        // 1. Terrain
         for (let i = 0; i < this.terrain.heights.length; i++) {
-            h = (h * 31 + this.terrain.heights[i]) | 0;
+            hashInt(this.terrain.heights[i]);
         }
+
+        // 2. Tanks
         for (const tank of this.tanks) {
-            h = (h * 31 + tank.x_fp) | 0;
-            h = (h * 31 + tank.y_fp) | 0;
-            h = (h * 31 + tank.health) | 0;
+            hashInt(tank.x_fp);
+            hashInt(tank.y_fp);
+            hashInt(tank.vx_fp);
+            hashInt(tank.vy_fp);
+            hashInt(tank.health);
+            hashInt(tank.aimAngle);
+            hashInt(tank.aimPower);
+            hashInt(tank.alive ? 1 : 0);
         }
+
+        // 3. Projectile
+        if (this.projectile) {
+            hashInt(1);
+            hashInt(this.projectile.x_fp);
+            hashInt(this.projectile.y_fp);
+            hashInt(this.projectile.vx_fp);
+            hashInt(this.projectile.vy_fp);
+        } else {
+            hashInt(0);
+        }
+
+        // 4. Wind and Rules
+        hashInt(this.rules.wind);
+        hashInt(this.rules.turnNumber);
+        hashInt(this.rules.activePlayerIndex);
+        hashInt(this.rules.state);
+        hashInt(this.rules.turnTimer);
+
+        // 5. RNG State
+        hashInt(this.rng.state);
+
         return h;
     }
 }

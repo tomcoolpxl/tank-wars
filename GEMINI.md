@@ -8,6 +8,9 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 - **Phase 1 (Simulation Core):** COMPLETE.
 - **Phase 2 (Phaser Integration):** COMPLETE.
 - **Phase 3 (Input System):** COMPLETE.
+- **Phase 4 (Networking):** COMPLETE.
+- **Phase 5 (HUD & UX):** COMPLETE.
+- **Phase 6 (Determinism Harness):** COMPLETE.
 
 ## Architecture
 - **`src/simulation/`**: Pure logic core.
@@ -22,13 +25,18 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
     - `explosion.js`: Damage and crater logic.
     - `rules.js`: Turn-based state machine.
     - `sim.js`: Main Simulation API.
+- **`src/net/`**: WebRTC P2P networking.
+    - `webrtc.js`: `NetworkManager` for P2P connections.
+- **`src/ui/`**: UI components.
+    - `HUD.js`: Game overlay (health, stats, timer, game over).
 - **`src/render/`**: Phaser-specific rendering helpers.
-- **`src/scenes/`**: Phaser scenes.
+- **`src/scenes/`**: Phaser scenes (`LobbyScene`, `GameScene`).
 - **`src/main.js`**: Phaser entry point.
 - **`tests/`**: Standalone deterministic logic tests.
 
 ## Tests
 - `tests/phase3_test.js`: Verifies deterministic input handling (angle/power increments) and authoritative auto-fire timeout. Run with `node tests/phase3_test.js`.
+- `tests/determinism.js`: Verifies simulation determinism by running two identical simulations and comparing state hashes turn-by-turn. Run with `node tests/determinism.js`.
 
 ## Development Rules
 1. **Determinism:** Never use `Math.random()`, `Date.now()`, or floating-point numbers in `src/simulation/`.
