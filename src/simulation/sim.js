@@ -116,10 +116,15 @@ export class Simulation {
         activeTank.aimAngle = angle;
         activeTank.aimPower = power;
 
+        // Spawn at barrel tip (20 units out)
+        const totalAngle = activeTank.baseAngleDeg + angle;
+        const spawnX = activeTank.x_fp + Math.floor(20 * getCos(totalAngle));
+        const spawnY = activeTank.y_fp + Math.floor(20 * getSin(totalAngle));
+
         this.projectile = new Projectile(
-            activeTank.x_fp, 
-            activeTank.y_fp, 
-            activeTank.baseAngleDeg + angle, 
+            spawnX, 
+            spawnY, 
+            totalAngle, 
             power, 
             this.rules.wind,
             activeTank.id

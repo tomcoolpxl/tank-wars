@@ -1,4 +1,4 @@
-import { FP, GRAVITY_FP, PROJECTILE_LIFETIME_TICKS, WIND_ACCEL_FP } from './constants.js';
+import { FP, GRAVITY_FP, PROJECTILE_LIFETIME_TICKS, WIND_ACCEL_FP, PROJECTILE_POWER_TO_VEL } from './constants.js';
 import { getSin, getCos } from './trigLUT.js';
 import { mulFP } from './fixed.js';
 
@@ -8,15 +8,24 @@ export class Projectile {
         this.y_fp = y_fp;
         this.shooterId = shooterId;
         
-        // v0 = power * 4 units/s
-        const v0 = power * 4;
+        // v0 = power * multiplier units/s
+        const v0 = power * PROJECTILE_POWER_TO_VEL;
         const v0_fp = v0 * FP;
         
         // vx0 = v0 * cos(angle)
         // vy0 = v0 * sin(angle)
-        // Since getSin/getCos return values scaled by FP, we need to div by FP or use mulFP.
         this.vx_fp = Math.floor((v0_fp * getCos(angleDeg)) / FP / 60);
         this.vy_fp = Math.floor((v0_fp * getSin(angleDeg)) / FP / 60);
+
+        // Ensure velocity > 0 if power > 0
+        if (power > 0) {
+            if (Math.abs(this.vx_fp) < 1 && getCos(angleDeg) !== 0) {
+                this.vx_fp = getCos(angleDeg) > 0 ? 1 : -1;
+            }
+            if (Math.abs(this.vy_fp) < 1 && getSin(angleDeg) !== 0) {
+                this.vy_fp = getSin(angleDeg) > 0 ? 1 : -1;
+            }
+        }
         
         this.ticksAlive = 0;
         this.active = true;

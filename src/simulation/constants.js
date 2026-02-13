@@ -10,7 +10,7 @@ export const TICK_RATE = 60;
 export const TICK_DURATION_MS = 1000 / TICK_RATE;
 
 // Physics constants in logical units/s^2 (multiplied by FP)
-export const GRAVITY_FP = 25000000; // 25.0 * 1,000,000 (was 9.8)
+export const GRAVITY_FP = 35000000; // 35.0 * 1,000,000 (was 25.0)
 
 // Terrain constants
 export const TERRAIN_STEP = 2;
@@ -28,7 +28,7 @@ export const TANK_SPAWN_RIGHT_RANGE = [480, 760];
 
 // Projectile constants
 export const PROJECTILE_MAX_POWER = 100;
-export const PROJECTILE_POWER_TO_VEL = 4; // power * 4 units/s
+export const PROJECTILE_POWER_TO_VEL = 3; // power * 3 units/s
 export const PROJECTILE_LIFETIME_TICKS = 600;
 export const WIND_ACCEL_FP = 500000; // 0.5 * 1,000,000 (acceleration units per unit of wind)
 
