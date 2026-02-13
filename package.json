@@ -7,12 +7,17 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/run_tests.js"
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "test:legacy": "node tests/run_tests.js"
   },
   "dependencies": {
     "phaser": "^3.80.1"
   },
   "devDependencies": {
-    "vite": "^5.0.0"
+    "@playwright/test": "^1.58.2",
+    "vite": "^5.0.0",
+    "vitest": "^4.0.18"
   }
 }

@@ -1,0 +1,54 @@
+import { describe, it, expect } from 'vitest';
+import { Projectile } from '../../src/simulation/projectile.js';
+import { Terrain } from '../../src/simulation/terrain.js';
+import { Tank } from '../../src/simulation/tank.js';
+import { FP } from '../../src/simulation/constants.js';
+
+describe('Projectile Physics', () => {
+    it('should follow gravity', () => {
+        const p = new Projectile(100 * FP, 300 * FP, 0, 50, 0);
+        const initialVy = p.vy_fp;
+        p.step(new Terrain(), []);
+        expect(p.vy_fp).toBeLessThan(initialVy);
+    });
+
+    it('should collide with terrain', () => {
+        const terrain = new Terrain();
+        for(let i=0; i<terrain.heights.length; i++) terrain.heights[i] = 100;
+        
+        // Projectile just above terrain at 101, moving down
+        const p = new Projectile(100 * FP, 101 * FP, 0, 0, 0);
+        p.vy_fp = -2 * FP; 
+        
+        const result = p.step(terrain, []);
+        expect(result.type).toBe('explosion');
+        expect(p.active).toBe(false);
+    });
+
+    it('should collide with tanks', () => {
+        const terrain = new Terrain();
+        const tank = new Tank(0, 200 * FP, 150 * FP);
+        
+        // Projectile moving through tank
+        const p = new Projectile(200 * FP, 151 * FP, 0, 0, 0);
+        p.vy_fp = -1 * FP;
+
+        const result = p.step(terrain, [tank]);
+        expect(result.type).toBe('explosion');
+        expect(p.active).toBe(false);
+    });
+
+    it('should respect lifetime cap', () => {
+        const p = new Projectile(400 * FP, 500 * FP, 90, 1, 0);
+        p.ticksAlive = 599;
+        const result = p.step(new Terrain(), []);
+        expect(result.type).toBe('timeout');
+        expect(p.active).toBe(false);
+    });
+
+    it('should go out of bounds', () => {
+        const p = new Projectile(799 * FP, 300 * FP, 0, 100, 0);
+        const result = p.step(new Terrain(), []);
+        expect(result.type).toBe('out-of-bounds');
+    });
+});
