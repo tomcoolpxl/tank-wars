@@ -34,9 +34,13 @@ export class GameScene extends Phaser.Scene {
         this.replayIndex = 0;
         this.lastTurnNumber = 0;
         this.lastGameState = null;
+        this.pendingRemoteShashes = {}; // Typo in original? No, it was pendingRemoteHashes. 
+        // Wait, let me check the original code again for init.
         this.pendingRemoteHashes = {};
         this.localTurnHashes = {};
         this.pendingRemoteShots = []; // Buffer for SHOT messages that arrive early
+        this.localReady = false;
+        this.remoteReady = false;
     }
 
     log(...args) {
@@ -55,6 +59,16 @@ export class GameScene extends Phaser.Scene {
         this.sendHash(0);
 
         if (this.networkManager) {
+            this.networkManager.onConnectionStateChange((state) => {
+                if (state === 'closed' || state === 'failed') {
+                    if (this.hud) {
+                        this.hud.showStatus('CONNECTION LOST', 5000);
+                        if (this.hud.playAgainBtn) this.hud.playAgainBtn.setVisible(false);
+                        if (this.hud.playAgainStatus) this.hud.playAgainStatus.node.innerText = 'CONNECTION LOST';
+                    }
+                }
+            });
+
             this.networkManager.onMessage((msg) => {
                 if (this.isReplaying) return;
                 switch (msg.type) {
@@ -62,9 +76,25 @@ export class GameScene extends Phaser.Scene {
                     case 'HASH': this.handleRemoteHash(msg); break;
                     case 'SYNC': this.handleRemoteSync(msg); break;
                     case 'ABORT': this.handleRemoteAbort(msg); break;
+                    case 'PLAY_AGAIN_READY': this.handleRemoteReady(); break;
+                    case 'PLAY_AGAIN_START': this.handlePlayAgainStart(msg); break;
                 }
             });
         }
+
+        this.events.on('play-again', () => {
+            this.localReady = true;
+            if (this.networkManager) {
+                this.networkManager.send({ type: 'PLAY_AGAIN_READY' });
+            }
+            if (this.isHost && this.remoteReady) {
+                this.startNewGame();
+            } else if (!this.isHost && this.remoteReady) {
+                this.hud.playAgainStatus.node.innerText = 'WAITING FOR HOST...';
+            } else {
+                this.hud.playAgainStatus.node.innerText = 'WAITING FOR OPPONENT...';
+            }
+        });
 
         this.terrainRenderer = new TerrainRenderer(this);
         this.tankRenderer = new TankRenderer(this);
@@ -89,6 +119,41 @@ export class GameScene extends Phaser.Scene {
         this.events.on('shutdown', () => {
             const buttons = document.querySelectorAll('.hud-button');
             buttons.forEach(btn => btn.remove());
+        });
+    }
+
+    handleRemoteReady() {
+        this.remoteReady = true;
+        if (this.hud) {
+            if (this.localReady) {
+                if (this.isHost) {
+                    this.startNewGame();
+                } else {
+                    this.hud.playAgainStatus.node.innerText = 'WAITING FOR HOST...';
+                }
+            } else {
+                this.hud.playAgainStatus.node.innerText = 'OPPONENT WANTS TO PLAY AGAIN!';
+            }
+        }
+    }
+
+    handlePlayAgainStart(msg) {
+        if (this.isHost) return;
+        this.scene.restart({
+            networkManager: this.networkManager,
+            isHost: this.isHost,
+            seed: msg.seed
+        });
+    }
+
+    startNewGame() {
+        if (!this.isHost) return;
+        const newSeed = Math.floor(Math.random() * 0xFFFFFFFF);
+        this.networkManager.send({ type: 'PLAY_AGAIN_START', seed: newSeed });
+        this.scene.restart({
+            networkManager: this.networkManager,
+            isHost: this.isHost,
+            seed: newSeed
         });
     }
 
@@ -180,8 +245,8 @@ export class GameScene extends Phaser.Scene {
         this.simulation.rules.state = GameState.GAME_OVER;
         this.simulation.rules.winner = -2;
         if (this.hud) {
-            this.hud.winText.setText('MATCH ABORTED');
-            this.hud.gameOverSubtext.setText(msg.reason.toUpperCase());
+            this.hud.winText.node.innerText = 'MATCH ABORTED';
+            this.hud.gameOverSubtext.node.innerText = msg.reason.toUpperCase();
             this.hud.gameOverOverlay.setVisible(true);
         }
     }

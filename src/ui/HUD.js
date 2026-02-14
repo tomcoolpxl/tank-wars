@@ -68,9 +68,45 @@ export class HUD {
 
         this.gameOverOverlay = this.scene.add.container(0, 0).setVisible(false);
         const bg = this.scene.add.rectangle(400, 300, 800, 600, 0x000000, 0.7);
-        this.winText = this.scene.add.text(400, 250, 'PLAYER 1 WINS!', { font: 'bold 48px monospace', fill: '#00ffff' }).setOrigin(0.5, 0.5);
-        this.gameOverSubtext = this.scene.add.text(400, 320, 'RELOAD TO PLAY AGAIN', { font: '18px monospace', fill: '#ffffff' }).setOrigin(0.5, 0.5);
-        this.gameOverOverlay.add([bg, this.winText, this.gameOverSubtext]);
+        
+        const winText = document.createElement('div');
+        winText.id = 'game-over-title';
+        winText.style.cssText = 'color: #00ffff; font-family: monospace; font-weight: bold; font-size: 48px; text-align: center; width: 800px;';
+        this.winTextDOM = winText;
+        this.winText = this.scene.add.dom(400, 250, winText).setOrigin(0.5, 0.5);
+
+        const subText = document.createElement('div');
+        subText.id = 'game-over-subtext';
+        subText.style.cssText = 'color: #ffffff; font-family: monospace; font-size: 18px; text-align: center; width: 800px; margin-top: 10px;';
+        subText.innerText = 'GAME OVER';
+        this.gameOverSubtext = this.scene.add.dom(400, 320, subText).setOrigin(0.5, 0.5);
+        
+        const playAgainBtn = document.createElement('button');
+        playAgainBtn.innerText = 'PLAY AGAIN';
+        playAgainBtn.id = 'btn-play-again';
+        playAgainBtn.style.cssText = `
+            padding: 10px 20px;
+            background: #333;
+            color: #ffff00;
+            border: 2px solid #ffff00;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 24px;
+            cursor: pointer;
+            pointer-events: auto;
+        `;
+        playAgainBtn.onclick = () => {
+            this.playAgainBtn.setVisible(false);
+            this.scene.events.emit('play-again');
+        };
+        this.playAgainBtn = this.scene.add.dom(400, 380, playAgainBtn).setOrigin(0.5, 0.5);
+
+        const statusText = document.createElement('div');
+        statusText.id = 'play-again-status';
+        statusText.style.cssText = 'color: #00ff00; font-family: monospace; font-size: 16px; text-align: center; width: 800px; margin-top: 10px;';
+        this.playAgainStatus = this.scene.add.dom(400, 420, statusText).setOrigin(0.5, 0.5);
+
+        this.gameOverOverlay.add([bg, this.winText, this.gameOverSubtext, this.playAgainBtn, this.playAgainStatus]);
         this.container.add(this.gameOverOverlay);
     }
 
@@ -184,7 +220,11 @@ export class HUD {
 
         if (rules.state === GameState.GAME_OVER) {
             this.gameOverOverlay.setVisible(true);
-            this.winText.setText(rules.winner === -1 ? 'DRAW!' : (rules.winner === -2 ? 'MATCH ABORTED' : `PLAYER ${rules.winner + 1} WINS!`));
+            const winnerText = rules.winner === -1 ? 'DRAW!' : (rules.winner === -2 ? 'MATCH ABORTED' : `PLAYER ${rules.winner + 1} WINS!`);
+            this.winText.node.innerText = winnerText;
+            if (rules.winner === -2) {
+                this.playAgainBtn.setVisible(false);
+            }
         } else {
             this.gameOverOverlay.setVisible(false);
         }
