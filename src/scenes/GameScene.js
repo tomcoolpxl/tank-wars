@@ -345,7 +345,7 @@ export class GameScene extends Phaser.Scene {
             if (++ticksProcessed > 10) break;
         }
 
-        if (!this.isReplaying && localTurn && isAiming && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+        if (!this.isReplaying && localTurn && isAiming && (Phaser.Input.Keyboard.JustDown(this.spaceKey) || hudButtons['fire'])) {
             const activeTank = this.simulation.tanks[this.localPlayerIndex];
             this.networkManager.send({
                 type: 'SHOT',
@@ -355,6 +355,9 @@ export class GameScene extends Phaser.Scene {
             });
             this.recordShot(activeTank.aimAngle, activeTank.aimPower);
             this.simulation.fire(activeTank.aimAngle, activeTank.aimPower, this.localPlayerIndex);
+            
+            // Reset HUD fire state so it doesn't repeat immediately if held
+            if (this.hud) this.hud.buttonStates['fire'] = false;
         }
 
         this.tankRenderer.render(this.simulation.tanks, this.simulation.terrain);
@@ -367,9 +370,9 @@ export class GameScene extends Phaser.Scene {
 }
 
 class TickRepeater {
-    constructor(delayTicks = 24, rateTicks = 6) {
+    constructor(delayTicks = 20, initialRateTicks = 4) {
         this.delayTicks = delayTicks;
-        this.rateTicks = rateTicks;
+        this.initialRateTicks = initialRateTicks;
         this.startTick = -1;
         this.lastTriggerTick = -1;
     }
@@ -384,13 +387,18 @@ class TickRepeater {
         if (this.startTick === -1) {
             this.startTick = currentTick;
             this.lastTriggerTick = currentTick;
-            return true;
+            return true; // First click always triggers
         }
 
         const elapsed = currentTick - this.startTick;
         if (elapsed < this.delayTicks) return false;
 
-        if (currentTick - this.lastTriggerTick >= this.rateTicks) {
+        // Acceleration: reduce rateTicks over time.
+        // Every 30 ticks (0.5s) of holding after the initial delay, reduce rate by 1, down to 1.
+        const heldAfterDelay = elapsed - this.delayTicks;
+        const currentRate = Math.max(1, this.initialRateTicks - Math.floor(heldAfterDelay / 30));
+
+        if (currentTick - this.lastTriggerTick >= currentRate) {
             this.lastTriggerTick = currentTick;
             return true;
         }

@@ -12,7 +12,8 @@ export class HUD {
             'angle-down': false,
             'angle-up': false,
             'power-down': false,
-            'power-up': false
+            'power-up': false,
+            'fire': false
         };
 
         this.createHUD();
@@ -22,46 +23,37 @@ export class HUD {
         const textColor = '#00ffff';
         const fontStyle = { font: 'bold 18px monospace', fill: textColor };
         const labelStyle = { font: '14px monospace', fill: textColor };
+        const statStyle = { font: 'bold 16px monospace', fill: textColor };
 
-        this.p1Label = this.scene.add.text(20, 20, 'PLAYER 1', labelStyle);
-        this.p1HealthBG = this.scene.add.graphics();
-        this.p1HealthBG.fillStyle(0x333333);
-        this.p1HealthBG.fillRect(20, 40, 200, 15);
+        // Player 1 Area
+        this.p1Label = this.scene.add.text(20, 10, 'PLAYER 1', labelStyle);
+        this.p1HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(20, 28, 200, 12);
         this.p1HealthBar = this.scene.add.graphics();
-        this.container.add([this.p1Label, this.p1HealthBG, this.p1HealthBar]);
+        this.p1AngleText = this.scene.add.text(20, 45, '45°', statStyle);
+        this.p1PowerText = this.scene.add.text(20, 70, '50', statStyle);
+        this.container.add([this.p1Label, this.p1HealthBG, this.p1HealthBar, this.p1AngleText, this.p1PowerText]);
 
-        this.p2Label = this.scene.add.text(800 - 20, 20, 'PLAYER 2', labelStyle).setOrigin(1, 0);
-        this.p2HealthBG = this.scene.add.graphics();
-        this.p2HealthBG.fillStyle(0x333333);
-        this.p2HealthBG.fillRect(800 - 220, 40, 200, 15);
+        // Player 2 Area
+        this.p2Label = this.scene.add.text(800 - 20, 10, 'PLAYER 2', labelStyle).setOrigin(1, 0);
+        this.p2HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(800 - 220, 28, 200, 12);
         this.p2HealthBar = this.scene.add.graphics();
-        this.container.add([this.p2Label, this.p2HealthBG, this.p2HealthBar]);
+        this.p2AngleText = this.scene.add.text(800 - 20, 45, '45°', statStyle).setOrigin(1, 0);
+        this.p2PowerText = this.scene.add.text(800 - 20, 70, '50', statStyle).setOrigin(1, 0);
+        this.container.add([this.p2Label, this.p2HealthBG, this.p2HealthBar, this.p2AngleText, this.p2PowerText]);
 
-        this.timerText = this.scene.add.text(400, 30, '20', { font: 'bold 32px monospace', fill: textColor }).setOrigin(0.5, 0.5);
-        this.timerLabel = this.scene.add.text(400, 55, 'SECONDS', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        // Center Area (Timer & Wind)
+        this.timerText = this.scene.add.text(400, 25, '20', { font: 'bold 28px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.timerLabel = this.scene.add.text(400, 48, 'SEC', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
         this.container.add([this.timerText, this.timerLabel]);
 
-        this.windLabel = this.scene.add.text(400, 90, 'WIND', { font: '12px monospace', fill: textColor }).setOrigin(0.5, 0.5);
-        this.windText = this.scene.add.text(400, 105, '0', fontStyle).setOrigin(0.5, 0.5);
+        this.windLabel = this.scene.add.text(400, 70, 'WIND', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.windText = this.scene.add.text(400, 85, '0', fontStyle).setOrigin(0.5, 0.5);
         this.windArrow = this.scene.add.graphics();
         this.container.add([this.windLabel, this.windText, this.windArrow]);
 
-        this.statsContainer = this.scene.add.container(20, 530);
-        const labelStyle2 = { font: 'bold 16px monospace', fill: textColor };
-        this.angleLabel = this.scene.add.text(0, 0, 'ANGLE:', labelStyle2);
-        this.angleText = this.scene.add.text(70, 0, '45°', fontStyle);
-        this.powerLabel = this.scene.add.text(0, 30, 'POWER:', labelStyle2);
-        this.powerText = this.scene.add.text(70, 30, '50', fontStyle);
-        this.powerBarBG = this.scene.add.graphics();
-        this.powerBarBG.fillStyle(0x333333);
-        this.powerBarBG.fillRect(0, 60, 150, 10);
-        this.powerBar = this.scene.add.graphics();
-        this.statsContainer.add([this.angleLabel, this.angleText, this.powerLabel, this.powerText, this.powerBarBG, this.powerBar]);
-        this.container.add(this.statsContainer);
-
         this.createDOMButtons();
 
-        this.turnIndicator = this.scene.add.text(400, 170, 'YOUR TURN', { font: 'bold 24px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
+        this.turnIndicator = this.scene.add.text(400, 135, 'YOUR TURN', { font: 'bold 20px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
         this.container.add(this.turnIndicator);
         this.statusText = this.scene.add.text(400, 250, '', { font: 'bold 32px monospace', fill: '#ff00ff' }).setOrigin(0.5, 0.5).setVisible(false);
         this.container.add(this.statusText);
@@ -113,10 +105,11 @@ export class HUD {
     createDOMButtons() {
         this.domButtons = {};
         const configs = [
-            { id: 'angle-down', text: '-', x: 130, y: 528 },
-            { id: 'angle-up', text: '+', x: 165, y: 528 },
-            { id: 'power-down', text: '-', x: 130, y: 558 },
-            { id: 'power-up', text: '+', x: 165, y: 558 }
+            { id: 'angle-down', text: '-' },
+            { id: 'angle-up', text: '+' },
+            { id: 'power-down', text: '-' },
+            { id: 'power-up', text: '+' },
+            { id: 'fire', text: 'FIRE' }
         ];
 
         configs.forEach(cfg => {
@@ -126,14 +119,14 @@ export class HUD {
             btn.innerText = cfg.text;
             btn.setAttribute('data-testid', cfg.id);
             btn.style.cssText = `
-                width: 30px;
-                height: 30px;
+                width: 32px;
+                height: 32px;
                 background: #111;
                 color: #00ffff;
                 border: 1px solid #00ffff;
                 font-family: monospace;
                 font-weight: bold;
-                font-size: 20px;
+                font-size: 18px;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
@@ -142,24 +135,34 @@ export class HUD {
                 pointer-events: auto;
             `;
 
+            if (cfg.id === 'fire') {
+                btn.style.width = '100px';
+                btn.style.height = '35px';
+                btn.style.background = '#400';
+                btn.style.color = '#ff4444';
+                btn.style.border = '2px solid #ff4444';
+                btn.style.fontSize = '20px';
+            }
+
             const start = (e) => { 
-                this.log(`Button press START: ${cfg.id}`);
                 e.preventDefault(); 
                 this.buttonStates[cfg.id] = true; 
             };
             const stop = (e) => { 
-                this.log(`Button press STOP: ${cfg.id}`);
                 e.preventDefault(); 
                 this.buttonStates[cfg.id] = false; 
             };
 
             btn.addEventListener('mousedown', start);
-            btn.addEventListener('mouseup', stop);
-            btn.addEventListener('mouseleave', stop);
             btn.addEventListener('touchstart', start, { passive: false });
-            btn.addEventListener('touchend', stop);
+            
+            if (cfg.id !== 'fire') {
+                btn.addEventListener('mouseup', stop);
+                btn.addEventListener('mouseleave', stop);
+                btn.addEventListener('touchend', stop);
+            }
 
-            const domObj = this.scene.add.dom(cfg.x, cfg.y, btn).setOrigin(0, 0).setScrollFactor(0);
+            const domObj = this.scene.add.dom(0, 0, btn).setOrigin(0.5, 0.5).setScrollFactor(0);
             this.domButtons[cfg.id] = domObj;
         });
     }
@@ -176,8 +179,12 @@ export class HUD {
         const isLocalTurn = activePlayerIndex === localPlayerIndex;
         const isAiming = rules.state === GameState.TURN_AIM;
 
-        this.updateHealthBar(this.p1HealthBar, 20, 40, simulation.tanks[0].health);
-        this.updateHealthBar(this.p2HealthBar, 800 - 220, 40, simulation.tanks[1].health);
+        if (!isLocalTurn || !isAiming) {
+            this.buttonStates['fire'] = false;
+        }
+
+        this.updateHealthBar(this.p1HealthBar, 20, 28, simulation.tanks[0].health, 12);
+        this.updateHealthBar(this.p2HealthBar, 800 - 220, 28, simulation.tanks[1].health, 12);
 
         const seconds = Math.max(0, Math.ceil(rules.turnTimer / 60));
         this.timerText.setText(seconds.toString()).setVisible(isAiming);
@@ -191,24 +198,36 @@ export class HUD {
             const arrowSize = Math.min(10 + Math.abs(rules.wind) * 3, 40);
             this.windArrow.lineStyle(2, arrowColor, 0.8).fillStyle(arrowColor, 0.8);
             const xEnd = isRight ? 400 + arrowSize : 400 - arrowSize;
-            this.windArrow.lineBetween(400, 125, xEnd, 125);
-            if (isRight) this.windArrow.fillTriangle(xEnd, 125, xEnd - 6, 125 - 3, xEnd - 6, 125 + 3);
-            else this.windArrow.fillTriangle(xEnd, 125, xEnd + 6, 125 - 3, xEnd + 6, 125 + 3);
+            this.windArrow.lineBetween(400, 100, xEnd, 100);
+            if (isRight) this.windArrow.fillTriangle(xEnd, 100, xEnd - 6, 100 - 3, xEnd - 6, 100 + 3);
+            else this.windArrow.fillTriangle(xEnd, 100, xEnd + 6, 100 - 3, xEnd + 6, 100 + 3);
         }
 
-        const activeTank = simulation.tanks[activePlayerIndex];
-        this.angleText.setText(`${activeTank.aimAngle}°`);
-        this.powerText.setText(`${activeTank.aimPower}`);
-        this.powerBar.clear().fillStyle(isLocalTurn ? 0x00ffff : 0x888888, 0.8).fillRect(0, 60, (activeTank.aimPower / 100) * 150, 10);
-        
-        const color = isLocalTurn ? '#00ffff' : '#888888';
-        this.angleText.setFill(color); this.powerText.setFill(color);
-        this.angleLabel.setFill(color); this.powerLabel.setFill(color);
+        // Update stats
+        simulation.tanks.forEach((tank, idx) => {
+            const angleTxt = idx === 0 ? this.p1AngleText : this.p2AngleText;
+            const powerTxt = idx === 0 ? this.p1PowerText : this.p2PowerText;
+            angleTxt.setText(`ANG: ${tank.aimAngle}°`);
+            powerTxt.setText(`PWR: ${tank.aimPower}`);
+            
+            const color = (idx === activePlayerIndex && isAiming) ? '#ffff00' : '#00ffff';
+            angleTxt.setFill(color);
+            powerTxt.setFill(color);
+        });
         
         if (this.domButtons) {
             const show = isLocalTurn && isAiming;
-            Object.values(this.domButtons).forEach(domObj => {
+            Object.keys(this.domButtons).forEach(id => {
+                const domObj = this.domButtons[id];
                 domObj.setVisible(show);
+                if (show) {
+                    const isP1 = activePlayerIndex === 0;
+                    if (id === 'angle-down') domObj.setPosition(isP1 ? 120 : 680, 52);
+                    if (id === 'angle-up') domObj.setPosition(isP1 ? 155 : 715, 52);
+                    if (id === 'power-down') domObj.setPosition(isP1 ? 120 : 680, 77);
+                    if (id === 'power-up') domObj.setPosition(isP1 ? 155 : 715, 77);
+                    if (id === 'fire') domObj.setPosition(400, 105);
+                }
             });
         }
 
@@ -230,11 +249,11 @@ export class HUD {
         }
     }
 
-    updateHealthBar(graphics, x, y, health) {
+    updateHealthBar(graphics, x, y, health, height = 15) {
         graphics.clear();
         if (health <= 0) return;
         let color = health < 30 ? 0xff0000 : (health < 60 ? 0xffff00 : 0x00ff00);
-        graphics.fillStyle(color).fillRect(x, y, (health / 100) * 200, 15);
+        graphics.fillStyle(color).fillRect(x, y, (health / 100) * 200, height);
     }
 
     showStatus(text, duration = 2000) {

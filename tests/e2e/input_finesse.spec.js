@@ -125,6 +125,16 @@ test.describe('Input Finesse - Fine-tuning buttons', () => {
             expect(s.angle).toBeGreaterThan(initialAngle + 5);
         }).toPass();
 
+        // Test Fire button
+        const fireBtn = page.getByTestId('fire');
+        await expect(fireBtn).toBeVisible();
+        await clickFinesse(fireBtn);
+        
+        await expect(async () => {
+            const s = await getSimState();
+            expect(s.state).toBe('PROJECTILE_FLIGHT');
+        }).toPass({ timeout: 10000 });
+
         await page2.close();
     });
 });
