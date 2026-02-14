@@ -1,4 +1,4 @@
-import { VIEWPORT_HEIGHT } from '../simulation/constants.js';
+import { VIEWPORT_HEIGHT, EXPLOSION_DAMAGE_RADIUS } from '../simulation/constants.js';
 import { RENDER_DEPTHS, COLORS, EXPLOSION_VISUALS } from './constants.js';
 
 export class ExplosionRenderer {
@@ -6,7 +6,55 @@ export class ExplosionRenderer {
         this.scene = scene;
     }
 
-    playExplosion(x, simY) {
+    playPreExplosion(x, simY) {
+        const y = VIEWPORT_HEIGHT - simY;
+        const blastRadius = EXPLOSION_DAMAGE_RADIUS;
+
+        // Pre-animation: Rapidly expanding thick bordered white see-through circle
+        const circle = this.scene.add.circle(x, y, 0, 0xffffff, 0);
+        circle.setDepth(RENDER_DEPTHS.FLASH);
+        circle.setStrokeStyle(4, 0xffffff, 0.5);
+        circle.setFillStyle(0xffffff, 0.1);
+
+        // Main expansion tween
+        this.scene.tweens.add({
+            targets: circle,
+            radius: blastRadius,
+            alpha: 1,
+            duration: 300, // Rapidly expands (0.3s)
+            ease: 'Expo.easeOut',
+            onComplete: () => {
+                // Fade out after expansion
+                this.scene.tweens.add({
+                    targets: circle,
+                    alpha: 0,
+                    duration: 700, // Total 1s for the whole pre-effect
+                    onComplete: () => circle.destroy()
+                });
+            }
+        });
+
+        // Fading trail effect: spawn multiple rings during expansion
+        const trailCount = 8;
+        for (let i = 0; i < trailCount; i++) {
+            this.scene.time.delayedCall(i * 40, () => {
+                const trailCircle = this.scene.add.circle(x, y, 0, 0xffffff, 0);
+                trailCircle.setDepth(RENDER_DEPTHS.EXPLOSION);
+                trailCircle.setStrokeStyle(2, 0xffffff, 0.3);
+                
+                this.scene.tweens.add({
+                    targets: trailCircle,
+                    radius: blastRadius,
+                    alpha: { start: 0.3, to: 0 },
+                    duration: 600,
+                    ease: 'Quad.easeOut',
+                    onComplete: () => trailCircle.destroy()
+                });
+            });
+        }
+    }
+
+    playBlastVisuals(x, simY) {
         const y = VIEWPORT_HEIGHT - simY;
         // Visual-only effect: multiple expanding rings for neon look
         const createRing = (radius, color, alpha, duration, scale) => {

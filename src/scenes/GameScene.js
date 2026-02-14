@@ -336,8 +336,11 @@ export class GameScene extends Phaser.Scene {
             }
 
             for (const event of this.simulation.events) {
+                if (event.type === 'explosion_start') {
+                    this.explosionRenderer.playPreExplosion(event.x, event.y);
+                }
                 if (event.type === 'explosion') {
-                    this.explosionRenderer.playExplosion(event.x, event.y);
+                    this.explosionRenderer.playBlastVisuals(event.x, event.y);
                     this.terrainRenderer.render(this.simulation.terrain);
                 }
             }

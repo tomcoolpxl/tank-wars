@@ -91,13 +91,27 @@ export class Simulation {
                     const result = this.projectile.step(this.terrain, this.tanks);
                     if (result) {
                         if (result.type === 'explosion') {
-                            applyExplosion(result.x, result.y, this.terrain, this.tanks);
-                            this.events.push({ type: 'explosion', x: result.x, y: result.y });
+                            this.rules.state = GameState.PRE_EXPLOSION;
+                            this.rules.preExplosionTimer = 60;
+                            this.rules.explosionX = result.x;
+                            this.rules.explosionY = result.y;
+                            this.events.push({ type: 'explosion_start', x: result.x, y: result.y });
+                        } else {
+                            this.rules.state = GameState.POST_EXPLOSION_STABILIZE;
+                            this.rules.stabilizationTimer = STABILIZATION_CAP_TICKS;
                         }
                         this.projectile = null;
-                        this.rules.state = GameState.POST_EXPLOSION_STABILIZE;
-                        this.rules.stabilizationTimer = STABILIZATION_CAP_TICKS;
                     }
+                }
+                break;
+
+            case GameState.PRE_EXPLOSION:
+                this.rules.preExplosionTimer--;
+                if (this.rules.preExplosionTimer <= 0) {
+                    applyExplosion(this.rules.explosionX, this.rules.explosionY, this.terrain, this.tanks);
+                    this.events.push({ type: 'explosion', x: this.rules.explosionX, y: this.rules.explosionY });
+                    this.rules.state = GameState.POST_EXPLOSION_STABILIZE;
+                    this.rules.stabilizationTimer = STABILIZATION_CAP_TICKS;
                 }
                 break;
 
@@ -166,6 +180,7 @@ export class Simulation {
         hashInt(this.rules.wind); hashInt(this.rules.turnNumber);
         hashInt(this.rules.activePlayerIndex); hashInt(this.rules.state === GameState.GAME_OVER ? 1 : 0);
         hashInt(this.rules.winner !== null ? this.rules.winner : -3);
+        hashInt(this.rules.preExplosionTimer); hashInt(this.rules.explosionX); hashInt(this.rules.explosionY);
         hashInt(this.rng.state);
         return h;
     }
@@ -182,7 +197,9 @@ export class Simulation {
                 turnNumber: this.rules.turnNumber, activePlayerIndex: this.rules.activePlayerIndex,
                 state: this.rules.state, turnTimer: this.rules.turnTimer,
                 wind: this.rules.wind, winner: this.rules.winner,
-                stabilizationTimer: this.rules.stabilizationTimer
+                stabilizationTimer: this.rules.stabilizationTimer,
+                preExplosionTimer: this.rules.preExplosionTimer,
+                explosionX: this.rules.explosionX, explosionY: this.rules.explosionY
             },
             rngState: this.rng.state,
             tickCount: this.tickCount
@@ -204,6 +221,9 @@ export class Simulation {
         this.rules.wind = state.rules.wind;
         this.rules.winner = state.rules.winner;
         this.rules.stabilizationTimer = state.rules.stabilizationTimer;
+        this.rules.preExplosionTimer = state.rules.preExplosionTimer;
+        this.rules.explosionX = state.rules.explosionX;
+        this.rules.explosionY = state.rules.explosionY;
         this.rng.state = state.rngState;
         this.tickCount = state.tickCount;
     }

@@ -215,8 +215,15 @@ describe('Simulation Lifecycle', () => {
         // Fire towards target
         sim.fire(0, 50, activeIdx);
         
-        let limit = 100;
+        let limit = 200;
         while (sim.rules.state === GameState.PROJECTILE_FLIGHT && limit-- > 0) {
+            sim.step({});
+        }
+        
+        expect(sim.events.some(e => e.type === 'explosion_start')).toBe(true);
+        expect(sim.rules.state).toBe(GameState.PRE_EXPLOSION);
+
+        while (sim.rules.state === GameState.PRE_EXPLOSION && limit-- > 0) {
             sim.step({});
         }
         

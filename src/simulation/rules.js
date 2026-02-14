@@ -4,6 +4,7 @@ export const GameState = {
     LOBBY: 'LOBBY',
     TURN_AIM: 'TURN_AIM',
     PROJECTILE_FLIGHT: 'PROJECTILE_FLIGHT',
+    PRE_EXPLOSION: 'PRE_EXPLOSION',
     POST_EXPLOSION_STABILIZE: 'POST_EXPLOSION_STABILIZE',
     GAME_OVER: 'GAME_OVER'
 };
@@ -15,6 +16,9 @@ export class Rules {
         this.turnNumber = 0;
         this.turnTimer = 0;
         this.stabilizationTimer = 0;
+        this.preExplosionTimer = 0;
+        this.explosionX = 0;
+        this.explosionY = 0;
         this.wind = 0;
         this.winner = null;
     }

@@ -95,18 +95,18 @@ test.describe('Advanced Game Scenarios', () => {
     
     if (hostIsActive) {
         await hostPage.evaluate(() => {
-            window.game.scene.getScene('GameScene').simulation.rules.turnTimer = 10;
+            window.game.scene.getScene('GameScene').simulation.rules.turnTimer = 1;
         });
     } else {
         await joinerPage.evaluate(() => {
-            window.game.scene.getScene('GameScene').simulation.rules.turnTimer = 10;
+            window.game.scene.getScene('GameScene').simulation.rules.turnTimer = 1;
         });
     }
 
     await expect.poll(async () => {
         const s = await getSimState(hostPage);
         return s.turn;
-    }, { timeout: 30000 }).toBeGreaterThanOrEqual(2);
+    }, { timeout: 40000 }).toBeGreaterThanOrEqual(2);
 
     await expect.poll(async () => {
         const hostState = await getSimState(hostPage);
