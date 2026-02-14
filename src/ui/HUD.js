@@ -77,10 +77,10 @@ export class HUD {
     createDOMButtons() {
         this.domButtons = {};
         const configs = [
-            { id: 'angle-down', text: '-', x: 160, y: 518 },
-            { id: 'angle-up', text: '+', x: 195, y: 518 },
-            { id: 'power-down', text: '-', x: 160, y: 548 },
-            { id: 'power-up', text: '+', x: 195, y: 548 }
+            { id: 'angle-down', text: '-', x: 130, y: 518 },
+            { id: 'angle-up', text: '+', x: 165, y: 518 },
+            { id: 'power-down', text: '-', x: 130, y: 548 },
+            { id: 'power-up', text: '+', x: 165, y: 548 }
         ];
 
         configs.forEach(cfg => {
@@ -92,15 +92,14 @@ export class HUD {
             btn.style.cssText = `
                 width: 30px;
                 height: 30px;
-                background: #333;
+                background: #111;
                 color: #00ffff;
                 border: 1px solid #00ffff;
                 font-family: monospace;
                 font-weight: bold;
                 font-size: 20px;
                 cursor: pointer;
-                z-index: 10000;
-                display: none;
+                display: flex;
                 align-items: center;
                 justify-content: center;
                 user-select: none;
@@ -124,8 +123,8 @@ export class HUD {
             btn.addEventListener('touchstart', start, { passive: false });
             btn.addEventListener('touchend', stop);
 
-            this.scene.add.dom(cfg.x, cfg.y, btn).setOrigin(0, 0);
-            this.domButtons[cfg.id] = btn;
+            const domObj = this.scene.add.dom(cfg.x, cfg.y, btn).setOrigin(0, 0).setScrollFactor(0);
+            this.domButtons[cfg.id] = domObj;
         });
     }
 
@@ -172,8 +171,8 @@ export class HUD {
         
         if (this.domButtons) {
             const show = isLocalTurn && isAiming;
-            Object.values(this.domButtons).forEach(btn => {
-                btn.style.display = show ? 'flex' : 'none';
+            Object.values(this.domButtons).forEach(domObj => {
+                domObj.setVisible(show);
             });
         }
 
