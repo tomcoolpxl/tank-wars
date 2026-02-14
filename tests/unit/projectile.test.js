@@ -69,10 +69,28 @@ describe('Projectile Physics', () => {
         expect(p.active).toBe(false);
     });
 
-    it('should go out of bounds', () => {
-        const p = new Projectile(799 * FP, 300 * FP, 0, 100, 0);
+    it('should go out of bounds when high in the air', () => {
+        const p = new Projectile(799 * FP, 500 * FP, 0, 100, 0);
+        // Step once: x will be around 804. y will be high enough above terrain.
         const result = p.step(new Terrain(), []);
         expect(result.type).toBe('out-of-bounds');
+    });
+
+    it('should explode when hitting the ground at boundaries', () => {
+        const terrain = new Terrain();
+        for (let i = 0; i < terrain.heights.length; i++) terrain.heights[i] = 50;
+
+        // Just outside left
+        const pLeft = new Projectile(-1 * FP, 40 * FP, 0, 0, 0);
+        expect(pLeft.step(terrain, []).type).toBe('explosion');
+
+        // Just outside right
+        const pRight = new Projectile(801 * FP, 40 * FP, 0, 0, 0);
+        expect(pRight.step(terrain, []).type).toBe('explosion');
+
+        // Below ground at bottom
+        const pBottom = new Projectile(400 * FP, -1 * FP, 0, 0, 0);
+        expect(pBottom.step(terrain, []).type).toBe('explosion');
     });
 
     it('should return null if step called on inactive projectile', () => {

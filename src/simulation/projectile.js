@@ -48,19 +48,20 @@ export class Projectile {
         const x = Math.floor(this.x_fp / FP);
         const y = Math.floor(this.y_fp / FP);
 
-        // 1. Bounds check
-        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) {
-            this.log(`Out of bounds: x=${x}, y=${y}`);
-            this.active = false;
-            return { type: 'out-of-bounds' };
-        }
-
-        // 2. Terrain collision
+        // 1. Terrain collision
+        // Check this before general bounds check so it can explode on edge ground or at the bottom (y=0)
         const groundY = terrain.getHeightAtX(x);
         if (y <= groundY) {
             this.log(`Terrain collision: x=${x}, y=${y}, groundY=${groundY}`);
             this.active = false;
             return { type: 'explosion', x, y };
+        }
+
+        // 2. Bounds check
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) {
+            this.log(`Out of bounds: x=${x}, y=${y}`);
+            this.active = false;
+            return { type: 'out-of-bounds' };
         }
 
         // 3. Tank collision (AABB)
