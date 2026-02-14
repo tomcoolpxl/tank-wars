@@ -8,16 +8,21 @@ export class HUD {
         this.container.setScrollFactor(0);
         this.container.setDepth(100);
 
+        this.buttonStates = {
+            'angle-down': false,
+            'angle-up': false,
+            'power-down': false,
+            'power-up': false
+        };
+
         this.createHUD();
     }
 
     createHUD() {
-        // Style constants
         const textColor = '#00ffff';
         const fontStyle = { font: 'bold 18px monospace', fill: textColor };
         const labelStyle = { font: '14px monospace', fill: textColor };
 
-        // Player 1 Health Bar
         this.p1Label = this.scene.add.text(20, 20, 'PLAYER 1', labelStyle);
         this.p1HealthBG = this.scene.add.graphics();
         this.p1HealthBG.fillStyle(0x333333);
@@ -25,7 +30,6 @@ export class HUD {
         this.p1HealthBar = this.scene.add.graphics();
         this.container.add([this.p1Label, this.p1HealthBG, this.p1HealthBar]);
 
-        // Player 2 Health Bar
         this.p2Label = this.scene.add.text(800 - 20, 20, 'PLAYER 2', labelStyle).setOrigin(1, 0);
         this.p2HealthBG = this.scene.add.graphics();
         this.p2HealthBG.fillStyle(0x333333);
@@ -33,40 +37,35 @@ export class HUD {
         this.p2HealthBar = this.scene.add.graphics();
         this.container.add([this.p2Label, this.p2HealthBG, this.p2HealthBar]);
 
-        // Timer
         this.timerText = this.scene.add.text(400, 30, '20', { font: 'bold 32px monospace', fill: textColor }).setOrigin(0.5, 0.5);
         this.timerLabel = this.scene.add.text(400, 55, 'SECONDS', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
         this.container.add([this.timerText, this.timerLabel]);
 
-        // Wind
         this.windLabel = this.scene.add.text(400, 90, 'WIND', { font: '12px monospace', fill: textColor }).setOrigin(0.5, 0.5);
         this.windText = this.scene.add.text(400, 105, '0', fontStyle).setOrigin(0.5, 0.5);
         this.windArrow = this.scene.add.graphics();
         this.container.add([this.windLabel, this.windText, this.windArrow]);
 
-        // Angle and Power (Bottom Left for current player)
         this.statsContainer = this.scene.add.container(20, 520);
-        this.angleText = this.scene.add.text(0, 0, 'ANGLE: 45°', fontStyle);
-        this.powerText = this.scene.add.text(0, 25, 'POWER: 50', fontStyle);
-        
-        // Power Bar
+        const labelStyle2 = { font: 'bold 16px monospace', fill: textColor };
+        this.angleLabel = this.scene.add.text(0, 0, 'ANGLE:', labelStyle2);
+        this.angleText = this.scene.add.text(70, 0, '45°', fontStyle);
+        this.powerLabel = this.scene.add.text(0, 30, 'POWER:', labelStyle2);
+        this.powerText = this.scene.add.text(70, 30, '50', fontStyle);
         this.powerBarBG = this.scene.add.graphics();
         this.powerBarBG.fillStyle(0x333333);
-        this.powerBarBG.fillRect(0, 50, 150, 10);
+        this.powerBarBG.fillRect(0, 60, 150, 10);
         this.powerBar = this.scene.add.graphics();
-        
-        this.statsContainer.add([this.angleText, this.powerText, this.powerBarBG, this.powerBar]);
+        this.statsContainer.add([this.angleLabel, this.angleText, this.powerLabel, this.powerText, this.powerBarBG, this.powerBar]);
         this.container.add(this.statsContainer);
 
-        // Turn Indicator
+        this.createDOMButtons();
+
         this.turnIndicator = this.scene.add.text(400, 170, 'YOUR TURN', { font: 'bold 24px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
         this.container.add(this.turnIndicator);
-
-        // Status Message (e.g., "Out of Bounds")
         this.statusText = this.scene.add.text(400, 250, '', { font: 'bold 32px monospace', fill: '#ff00ff' }).setOrigin(0.5, 0.5).setVisible(false);
         this.container.add(this.statusText);
 
-        // Game Over Overlay
         this.gameOverOverlay = this.scene.add.container(0, 0).setVisible(false);
         const bg = this.scene.add.rectangle(400, 300, 800, 600, 0x000000, 0.7);
         this.winText = this.scene.add.text(400, 250, 'PLAYER 1 WINS!', { font: 'bold 48px monospace', fill: '#00ffff' }).setOrigin(0.5, 0.5);
@@ -75,113 +74,139 @@ export class HUD {
         this.container.add(this.gameOverOverlay);
     }
 
+    createDOMButtons() {
+        const parent = document.getElementById('game-container');
+        if (!parent) return;
+
+        this.domButtons = {};
+        const configs = [
+            { id: 'angle-down', text: '-', x: 160, y: 518 },
+            { id: 'angle-up', text: '+', x: 195, y: 518 },
+            { id: 'power-down', text: '-', x: 160, y: 548 },
+            { id: 'power-up', text: '+', x: 195, y: 548 }
+        ];
+
+        configs.forEach(cfg => {
+            const btn = document.createElement('button');
+            btn.id = `btn-${cfg.id}`;
+            btn.className = 'hud-button';
+            btn.innerText = cfg.text;
+            btn.setAttribute('data-testid', cfg.id);
+            btn.style.cssText = `
+                position: absolute;
+                left: ${cfg.x}px;
+                top: ${cfg.y}px;
+                width: 30px;
+                height: 30px;
+                background: #333;
+                color: #00ffff;
+                border: 1px solid #00ffff;
+                font-family: monospace;
+                font-weight: bold;
+                font-size: 20px;
+                cursor: pointer;
+                z-index: 10000;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                user-select: none;
+                pointer-events: auto;
+            `;
+
+            const start = (e) => { 
+                this.log(`Button press START: ${cfg.id}`);
+                e.preventDefault(); 
+                this.buttonStates[cfg.id] = true; 
+            };
+            const stop = (e) => { 
+                this.log(`Button press STOP: ${cfg.id}`);
+                e.preventDefault(); 
+                this.buttonStates[cfg.id] = false; 
+            };
+
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', stop);
+            btn.addEventListener('mouseleave', stop);
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', stop);
+
+            parent.appendChild(btn);
+            this.domButtons[cfg.id] = btn;
+        });
+    }
+
+    log(...args) {
+        if (typeof window !== 'undefined' && window.DEBUG_HUD) {
+            console.log('[HUD]', ...args);
+        }
+    }
+
     update(simulation, localPlayerIndex) {
         const rules = simulation.rules;
         const activePlayerIndex = rules.activePlayerIndex;
         const isLocalTurn = activePlayerIndex === localPlayerIndex;
+        const isAiming = rules.state === GameState.TURN_AIM;
 
-        // Update health bars
         this.updateHealthBar(this.p1HealthBar, 20, 40, simulation.tanks[0].health);
         this.updateHealthBar(this.p2HealthBar, 800 - 220, 40, simulation.tanks[1].health);
 
-        // Update timer (show seconds, clamped to 0)
         const seconds = Math.max(0, Math.ceil(rules.turnTimer / 60));
-        this.timerText.setText(seconds.toString());
-        this.timerText.setVisible(rules.state === GameState.TURN_AIM);
-        this.timerLabel.setVisible(rules.state === GameState.TURN_AIM);
+        this.timerText.setText(seconds.toString()).setVisible(isAiming);
+        this.timerLabel.setVisible(isAiming);
 
-        // Update wind
         this.windText.setText(rules.wind > 0 ? `+${rules.wind}` : rules.wind.toString());
         this.windArrow.clear();
         if (rules.wind !== 0) {
             const isRight = rules.wind > 0;
             const arrowColor = 0x00ffff;
             const arrowSize = Math.min(10 + Math.abs(rules.wind) * 3, 40);
-            const xBase = 400;
-            const yBase = 125;
-            
-            this.windArrow.lineStyle(2, arrowColor, 0.8);
-            this.windArrow.fillStyle(arrowColor, 0.8);
-            
-            // Draw arrow line
-            const xEnd = isRight ? xBase + arrowSize : xBase - arrowSize;
-            this.windArrow.lineBetween(xBase, yBase, xEnd, yBase);
-            
-            // Draw arrow head
-            const headSize = 6;
-            if (isRight) {
-                this.windArrow.fillTriangle(xEnd, yBase, xEnd - headSize, yBase - headSize/2, xEnd - headSize, yBase + headSize/2);
-            } else {
-                this.windArrow.fillTriangle(xEnd, yBase, xEnd + headSize, yBase - headSize/2, xEnd + headSize, yBase + headSize/2);
-            }
+            this.windArrow.lineStyle(2, arrowColor, 0.8).fillStyle(arrowColor, 0.8);
+            const xEnd = isRight ? 400 + arrowSize : 400 - arrowSize;
+            this.windArrow.lineBetween(400, 125, xEnd, 125);
+            if (isRight) this.windArrow.fillTriangle(xEnd, 125, xEnd - 6, 125 - 3, xEnd - 6, 125 + 3);
+            else this.windArrow.fillTriangle(xEnd, 125, xEnd + 6, 125 - 3, xEnd + 6, 125 + 3);
         }
 
-        // Update active player stats
         const activeTank = simulation.tanks[activePlayerIndex];
-        this.angleText.setText(`ANGLE: ${activeTank.aimAngle}°`);
-        this.powerText.setText(`POWER: ${activeTank.aimPower}`);
+        this.angleText.setText(`${activeTank.aimAngle}°`);
+        this.powerText.setText(`${activeTank.aimPower}`);
+        this.powerBar.clear().fillStyle(isLocalTurn ? 0x00ffff : 0x888888, 0.8).fillRect(0, 60, (activeTank.aimPower / 100) * 150, 10);
         
-        // Update Power Bar
-        this.powerBar.clear();
-        this.powerBar.fillStyle(isLocalTurn ? 0x00ffff : 0x888888, 0.8);
-        this.powerBar.fillRect(0, 50, (activeTank.aimPower / 100) * 150, 10);
+        const color = isLocalTurn ? '#00ffff' : '#888888';
+        this.angleText.setFill(color); this.powerText.setFill(color);
+        this.angleLabel.setFill(color); this.powerLabel.setFill(color);
         
-        // Position stats near active player's side or just keep fixed
-        // For now, keep fixed but update color
-        this.angleText.setFill(isLocalTurn ? '#00ffff' : '#888888');
-        this.powerText.setFill(isLocalTurn ? '#00ffff' : '#888888');
+        if (this.domButtons) {
+            const show = isLocalTurn && isAiming;
+            Object.values(this.domButtons).forEach(btn => {
+                btn.style.display = show ? 'flex' : 'none';
+            });
+        }
 
-        // Update turn indicator
-        if (rules.state === GameState.TURN_AIM) {
-            this.turnIndicator.setVisible(true);
-            this.turnIndicator.setText(isLocalTurn ? 'YOUR TURN' : "OPPONENT'S TURN");
-            this.turnIndicator.setFill(isLocalTurn ? '#ffff00' : '#888888');
-        } else if (rules.state === GameState.PROJECTILE_FLIGHT) {
-            this.turnIndicator.setVisible(false);
+        if (isAiming) {
+            this.turnIndicator.setVisible(true).setText(isLocalTurn ? 'YOUR TURN' : "OPPONENT'S TURN").setFill(isLocalTurn ? '#ffff00' : '#888888');
         } else {
             this.turnIndicator.setVisible(false);
         }
 
-        // Handle Game Over
         if (rules.state === GameState.GAME_OVER) {
             this.gameOverOverlay.setVisible(true);
-            if (rules.winner === -1) {
-                this.winText.setText('DRAW!');
-            } else if (rules.winner === -2) {
-                // Text is already set by abortMatch
-            } else {
-                this.winText.setText(`PLAYER ${rules.winner + 1} WINS!`);
-            }
+            this.winText.setText(rules.winner === -1 ? 'DRAW!' : (rules.winner === -2 ? 'MATCH ABORTED' : `PLAYER ${rules.winner + 1} WINS!`));
         } else {
             this.gameOverOverlay.setVisible(false);
         }
-
-        // Update active player labels
-        this.p1Label.setFill(activePlayerIndex === 0 ? '#ffff00' : '#00ffff');
-        this.p2Label.setFill(activePlayerIndex === 1 ? '#ffff00' : '#00ffff');
     }
 
     updateHealthBar(graphics, x, y, health) {
         graphics.clear();
         if (health <= 0) return;
-        
-        // Color based on health percentage
-        let color = 0x00ff00;
-        if (health < 30) color = 0xff0000;
-        else if (health < 60) color = 0xffff00;
-
-        graphics.fillStyle(color);
-        graphics.fillRect(x, y, (health / 100) * 200, 15);
+        let color = health < 30 ? 0xff0000 : (health < 60 ? 0xffff00 : 0x00ff00);
+        graphics.fillStyle(color).fillRect(x, y, (health / 100) * 200, 15);
     }
 
     showStatus(text, duration = 2000) {
-        this.statusText.setText(text);
-        this.statusText.setVisible(true);
-        
+        this.statusText.setText(text).setVisible(true);
         if (this.statusTimer) this.statusTimer.remove();
-        
-        this.statusTimer = this.scene.time.delayedCall(duration, () => {
-            this.statusText.setVisible(false);
-        });
+        this.statusTimer = this.scene.time.delayedCall(duration, () => this.statusText.setVisible(false));
     }
 }

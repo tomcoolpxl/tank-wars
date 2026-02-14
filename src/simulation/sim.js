@@ -32,6 +32,12 @@ export class Simulation {
         this.autoFireEnabled = true;
     }
 
+    log(...args) {
+        if (typeof window !== 'undefined' && window.DEBUG_SIM) {
+            console.log('[SIM]', ...args);
+        }
+    }
+
     createTank(id, range) {
         const x = this.rng.nextInt(range[0], range[1]);
         const y = this.terrain.getHeightAtX(x);
@@ -50,15 +56,28 @@ export class Simulation {
             case GameState.TURN_AIM:
                 this.rules.turnTimer--;
                 if (this.rules.turnTimer <= 0 && this.autoFireEnabled) {
+                    this.log(`Timer expired. Auto-firing. turnTimer=${this.rules.turnTimer}`);
                     const t = this.tanks[this.rules.activePlayerIndex];
                     this.fire(t.aimAngle, t.aimPower, this.rules.activePlayerIndex);
                     break;
                 }
                 const activeTank = this.tanks[this.rules.activePlayerIndex];
-                if (inputs.left) activeTank.aimAngle = (activeTank.aimAngle + 1) | 0;
-                if (inputs.right) activeTank.aimAngle = (activeTank.aimAngle - 1) | 0;
-                if (inputs.up) activeTank.aimPower = (activeTank.aimPower + 1) | 0;
-                if (inputs.down) activeTank.aimPower = (activeTank.aimPower - 1) | 0;
+                if (inputs.left) {
+                    activeTank.aimAngle = (activeTank.aimAngle + 1) | 0;
+                    this.log(`Input LEFT -> aimAngle=${activeTank.aimAngle}`);
+                }
+                if (inputs.right) {
+                    activeTank.aimAngle = (activeTank.aimAngle - 1) | 0;
+                    this.log(`Input RIGHT -> aimAngle=${activeTank.aimAngle}`);
+                }
+                if (inputs.up) {
+                    activeTank.aimPower = (activeTank.aimPower + 1) | 0;
+                    this.log(`Input UP -> aimPower=${activeTank.aimPower}`);
+                }
+                if (inputs.down) {
+                    activeTank.aimPower = (activeTank.aimPower - 1) | 0;
+                    this.log(`Input DOWN -> aimPower=${activeTank.aimPower}`);
+                }
                 
                 if (activeTank.aimAngle < 0) activeTank.aimAngle = 0;
                 if (activeTank.aimAngle > 180) activeTank.aimAngle = 180;
@@ -99,7 +118,11 @@ export class Simulation {
     }
 
     fire(angle, power, playerIndex) {
-        if (this.rules.state !== GameState.TURN_AIM) return;
+        this.log(`fire() called: angle=${angle}, power=${power}, playerIndex=${playerIndex}`);
+        if (this.rules.state !== GameState.TURN_AIM) {
+            this.log(`fire() ignored: state is ${this.rules.state}`);
+            return;
+        }
         if (playerIndex !== undefined && playerIndex !== this.rules.activePlayerIndex) return;
 
         const activeTank = this.tanks[this.rules.activePlayerIndex];

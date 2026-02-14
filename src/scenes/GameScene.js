@@ -36,6 +36,12 @@ export class GameScene extends Phaser.Scene {
         this.lastGameState = null;
     }
 
+    log(...args) {
+        if (typeof window !== 'undefined' && window.DEBUG_NET) {
+            console.log('[NET]', ...args);
+        }
+    }
+
     create() {
         this.simulation = new Simulation(this.seed);
         this.simulation.start();
@@ -68,10 +74,27 @@ export class GameScene extends Phaser.Scene {
         
         this.cursors = this.input.keyboard.createCursorKeys();
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+        // Input repeaters for smooth but controlled aiming
+        this.repeaters = {
+            left: new TickRepeater(20, 4),
+            right: new TickRepeater(20, 4),
+            up: new TickRepeater(20, 4),
+            down: new TickRepeater(20, 4)
+        };
+
+        this.events.on('shutdown', () => {
+            const buttons = document.querySelectorAll('.hud-button');
+            buttons.forEach(btn => btn.remove());
+        });
     }
 
     handleRemoteShot(msg) {
-        if (this.simulation.rules.state !== GameState.TURN_AIM) return;
+        this.log(`Received SHOT:`, msg);
+        if (this.simulation.rules.state !== GameState.TURN_AIM) {
+            this.log(`Ignoring SHOT: State is ${this.simulation.rules.state}`);
+            return;
+        }
         if (this.simulation.rules.activePlayerIndex === this.localPlayerIndex) {
             this.abortMatch('Protocol Error: SHOT on our turn');
             return;
@@ -151,18 +174,24 @@ export class GameScene extends Phaser.Scene {
         const localTurn = this.simulation.rules.activePlayerIndex === this.localPlayerIndex;
         const isAiming = this.simulation.rules.state === GameState.TURN_AIM;
 
-        const inputs = {
-            left: localTurn && isAiming && this.cursors.left.isDown,
-            right: localTurn && isAiming && this.cursors.right.isDown,
-            up: localTurn && isAiming && this.cursors.up.isDown,
-            down: localTurn && isAiming && this.cursors.down.isDown
-        };
+        const hudButtons = this.hud ? this.hud.buttonStates : {};
 
         let ticksProcessed = 0;
         while (this.tickAccumulator >= TICK_DURATION_MS) {
-            this.simulation.autoFireEnabled = localTurn;
+            // Only force autoFireEnabled if we haven't manually disabled it for tests/debug
+            if (this.simulation.autoFireEnabled !== false) {
+                this.simulation.autoFireEnabled = localTurn;
+            }
             const prevState = this.simulation.rules.state;
             const prevTurn = this.simulation.rules.turnNumber;
+
+            // Update inputs for this specific tick
+            const inputs = {
+                left: localTurn && isAiming && this.repeaters.left.update(this.cursors.left.isDown || hudButtons['angle-up'], this.simulation.tickCount),
+                right: localTurn && isAiming && this.repeaters.right.update(this.cursors.right.isDown || hudButtons['angle-down'], this.simulation.tickCount),
+                up: localTurn && isAiming && this.repeaters.up.update(this.cursors.up.isDown || hudButtons['power-up'], this.simulation.tickCount),
+                down: localTurn && isAiming && this.repeaters.down.update(this.cursors.down.isDown || hudButtons['power-down'], this.simulation.tickCount)
+            };
 
             this.simulation.step(inputs);
             
@@ -222,5 +251,38 @@ export class GameScene extends Phaser.Scene {
         this.terrainRenderer.update(time);
         this.tankRenderer.update(time);
         this.projectileRenderer.update(time);
+    }
+}
+
+class TickRepeater {
+    constructor(delayTicks = 24, rateTicks = 6) {
+        this.delayTicks = delayTicks;
+        this.rateTicks = rateTicks;
+        this.startTick = -1;
+        this.lastTriggerTick = -1;
+    }
+
+    update(isDown, currentTick) {
+        if (!isDown) {
+            this.startTick = -1;
+            this.lastTriggerTick = -1;
+            return false;
+        }
+
+        if (this.startTick === -1) {
+            this.startTick = currentTick;
+            this.lastTriggerTick = currentTick;
+            return true;
+        }
+
+        const elapsed = currentTick - this.startTick;
+        if (elapsed < this.delayTicks) return false;
+
+        if (currentTick - this.lastTriggerTick >= this.rateTicks) {
+            this.lastTriggerTick = currentTick;
+            return true;
+        }
+
+        return false;
     }
 }

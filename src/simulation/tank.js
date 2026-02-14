@@ -21,10 +21,13 @@ export class Tank {
         this.aimPower = 50; // integer 0..100
         
         // Per-tick gravity in fixed-point
-        // g = 9.8 units/s^2. Ticks = 60/s. 
-        // g_per_tick = 9.8 / (60 * 60) units/tick^2.
-        // g_per_tick_fp = (GRAVITY_FP) / (60 * 60)
         this.g_per_tick_fp = Math.floor(GRAVITY_FP / 3600);
+    }
+
+    log(...args) {
+        if (typeof window !== 'undefined' && window.DEBUG_TANK) {
+            console.log(`[TANK ${this.id}]`, ...args);
+        }
     }
 
     step(terrain) {

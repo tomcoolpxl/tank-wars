@@ -9,6 +9,12 @@ export class Terrain {
         this.heights = new Int32Array(TERRAIN_SAMPLES);
     }
 
+    log(...args) {
+        if (typeof window !== 'undefined' && window.DEBUG_TERRAIN) {
+            console.log('[TERRAIN]', ...args);
+        }
+    }
+
     generate(seed) {
         const rng = new RNG(seed);
         

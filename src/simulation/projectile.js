@@ -37,6 +37,12 @@ export class Projectile {
         this.ax_wind_tick_fp = Math.floor((wind * WIND_ACCEL_FP) / 3600);
     }
 
+    log(...args) {
+        if (typeof window !== 'undefined' && window.DEBUG_PROJ) {
+            console.log('[PROJ]', ...args);
+        }
+    }
+
     step(terrain, tanks) {
         if (!this.active) return null;
 
@@ -52,12 +58,15 @@ export class Projectile {
 
         // 1. Bounds check
         if (x < 0 || x >= 800 || y < 0 || y >= 600) {
+            this.log(`Out of bounds: x=${x}, y=${y}`);
             this.active = false;
             return { type: 'out-of-bounds' };
         }
 
         // 2. Terrain collision
-        if (y <= terrain.getHeightAtX(x)) {
+        const groundY = terrain.getHeightAtX(x);
+        if (y <= groundY) {
+            this.log(`Terrain collision: x=${x}, y=${y}, groundY=${groundY}`);
             this.active = false;
             return { type: 'explosion', x, y };
         }
@@ -77,6 +86,7 @@ export class Projectile {
             // Dome collision: bounding box for now, could be distance-based
             // Width: 24 (tx-12 to tx+12), Height: 12 (ty to ty+12)
             if (x >= tx - 12 && x <= tx + 12 && y >= ty && y <= ty + 12) {
+                this.log(`Tank collision: tankId=${tank.id}, x=${x}, y=${y}`);
                 this.active = false;
                 return { type: 'explosion', x, y };
             }
@@ -84,6 +94,7 @@ export class Projectile {
 
         // 4. Lifetime cap
         if (this.ticksAlive >= PROJECTILE_LIFETIME_TICKS) {
+            this.log(`Lifetime expired: ticks=${this.ticksAlive}`);
             this.active = false;
             return { type: 'timeout' };
         }
