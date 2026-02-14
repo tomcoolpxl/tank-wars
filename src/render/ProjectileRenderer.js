@@ -1,4 +1,4 @@
-import { FP, HEIGHT } from '../simulation/constants.js';
+import { FP, VIEWPORT_HEIGHT } from '../simulation/constants.js';
 
 export class ProjectileRenderer {
     constructor(scene) {
@@ -29,7 +29,7 @@ export class ProjectileRenderer {
         }
         
         const x = projectile.x_fp / FP;
-        const y = HEIGHT - (projectile.y_fp / FP);
+        const y = VIEWPORT_HEIGHT - (projectile.y_fp / FP);
         
         // Add to trail
         this.trailPoints.push({ x, y });

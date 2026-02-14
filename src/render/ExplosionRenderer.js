@@ -1,4 +1,4 @@
-import { HEIGHT } from '../simulation/constants.js';
+import { VIEWPORT_HEIGHT } from '../simulation/constants.js';
 
 export class ExplosionRenderer {
     constructor(scene) {
@@ -6,7 +6,7 @@ export class ExplosionRenderer {
     }
 
     playExplosion(x, simY) {
-        const y = HEIGHT - simY;
+        const y = VIEWPORT_HEIGHT - simY;
         // Visual-only effect: multiple expanding rings for neon look
         const createRing = (radius, color, alpha, duration, scale) => {
             const circle = this.scene.add.circle(x, y, radius, color, alpha);

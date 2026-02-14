@@ -4,7 +4,9 @@
 export const FP = 1000000;
 
 export const WIDTH = 800;
-export const HEIGHT = 600;
+export const HEIGHT = 800; // Increased from 600 to 800
+export const SKY_BUFFER = 200; // Invisible area above the viewport for high shots
+export const VIEWPORT_HEIGHT = 600; // Original visible height
 
 export const TICK_RATE = 60;
 export const TICK_DURATION_MS = 1000 / TICK_RATE;

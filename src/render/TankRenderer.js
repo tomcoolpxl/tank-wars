@@ -1,4 +1,4 @@
-import { FP, TANK_WIDTH, TANK_HEIGHT, HEIGHT } from '../simulation/constants.js';
+import { FP, TANK_WIDTH, TANK_HEIGHT, VIEWPORT_HEIGHT } from '../simulation/constants.js';
 
 export class TankRenderer {
     constructor(scene) {
@@ -71,7 +71,7 @@ export class TankRenderer {
             
             // Position
             const x = tank.x_fp / FP;
-            const y = HEIGHT - (tank.y_fp / FP);
+            const y = VIEWPORT_HEIGHT - (tank.y_fp / FP);
             
             container.x = x;
             container.y = y;

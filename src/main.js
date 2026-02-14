@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
 import { GameScene } from './scenes/GameScene.js';
 import { LobbyScene } from './scenes/LobbyScene.js';
-import { WIDTH, HEIGHT } from './simulation/constants.js';
+import { WIDTH, VIEWPORT_HEIGHT } from './simulation/constants.js';
 
 const config = {
     type: Phaser.AUTO,
     width: WIDTH,
-    height: HEIGHT,
+    height: VIEWPORT_HEIGHT,
     parent: 'game-container',
     dom: {
         createContainer: true

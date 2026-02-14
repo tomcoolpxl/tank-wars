@@ -46,7 +46,7 @@ export class HUD {
         this.windArrow = this.scene.add.graphics();
         this.container.add([this.windLabel, this.windText, this.windArrow]);
 
-        this.statsContainer = this.scene.add.container(20, 520);
+        this.statsContainer = this.scene.add.container(20, 530);
         const labelStyle2 = { font: 'bold 16px monospace', fill: textColor };
         this.angleLabel = this.scene.add.text(0, 0, 'ANGLE:', labelStyle2);
         this.angleText = this.scene.add.text(70, 0, '45°', fontStyle);
@@ -77,10 +77,10 @@ export class HUD {
     createDOMButtons() {
         this.domButtons = {};
         const configs = [
-            { id: 'angle-down', text: '-', x: 130, y: 518 },
-            { id: 'angle-up', text: '+', x: 165, y: 518 },
-            { id: 'power-down', text: '-', x: 130, y: 548 },
-            { id: 'power-up', text: '+', x: 165, y: 548 }
+            { id: 'angle-down', text: '-', x: 130, y: 528 },
+            { id: 'angle-up', text: '+', x: 165, y: 528 },
+            { id: 'power-down', text: '-', x: 130, y: 558 },
+            { id: 'power-up', text: '+', x: 165, y: 558 }
         ];
 
         configs.forEach(cfg => {

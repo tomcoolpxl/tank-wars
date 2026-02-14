@@ -1,4 +1,4 @@
-import { TERRAIN_STEP, WIDTH, HEIGHT } from '../simulation/constants.js';
+import { TERRAIN_STEP, WIDTH, VIEWPORT_HEIGHT } from '../simulation/constants.js';
 
 export class TerrainRenderer {
     constructor(scene) {
@@ -38,11 +38,11 @@ export class TerrainRenderer {
 
     drawTerrainPath(graphics, terrain) {
         graphics.beginPath();
-        graphics.moveTo(0, HEIGHT - terrain.heights[0]);
+        graphics.moveTo(0, VIEWPORT_HEIGHT - terrain.heights[0]);
         
         for (let i = 1; i < terrain.heights.length; i++) {
             const x = i * TERRAIN_STEP;
-            const y = HEIGHT - terrain.heights[i];
+            const y = VIEWPORT_HEIGHT - terrain.heights[i];
             graphics.lineTo(x, y);
         }
         graphics.strokePath();
