@@ -78,22 +78,29 @@ export class LobbyScene extends Phaser.Scene {
         // Check for offer in URL hash
         const checkHash = () => {
             const hash = window.location.hash;
-            if (hash.startsWith('#offer=')) {
-                const encodedOffer = hash.substring(7);
+            if (hash.includes('offer=')) {
                 try {
-                    const decodedOffer = atob(encodedOffer);
+                    const encodedOffer = hash.split('offer=')[1].split('&')[0];
+                    const decodedOffer = atob(decodeURIComponent(encodedOffer));
                     initialActions.style.display = 'none';
                     joinSection.style.display = 'block';
                     btnCancel.style.display = 'inline-block';
                     document.getElementById('offer-in').value = decodedOffer;
                     statusText.innerText = 'Offer loaded from link. Click "Create Answer".';
+                    statusText.style.color = '#0f0';
                 } catch (e) {
-                    console.error('Failed to decode offer from URL');
+                    console.error('Failed to decode offer from URL', e);
+                    statusText.innerText = 'Error: Malformed invite link';
+                    statusText.style.color = '#f00';
                 }
             }
         };
 
         checkHash();
+        window.addEventListener('hashchange', checkHash);
+        this.events.on('shutdown', () => {
+            window.removeEventListener('hashchange', checkHash);
+        });
 
         let connectionTimeout = null;
         const startTimeout = () => {
@@ -147,11 +154,16 @@ export class LobbyScene extends Phaser.Scene {
 
         document.getElementById('btn-copy-link').addEventListener('click', () => {
             const offer = document.getElementById('offer-out').value;
-            if (!offer) return;
+            if (!offer) {
+                statusText.innerText = 'Wait for offer to be generated...';
+                statusText.style.color = '#ff0';
+                return;
+            }
             const encoded = btoa(offer);
-            const url = window.location.origin + window.location.pathname + '#offer=' + encoded;
+            const url = window.location.origin + window.location.pathname + '#offer=' + encodeURIComponent(encoded);
             navigator.clipboard.writeText(url);
             statusText.innerText = 'Invite link copied to clipboard!';
+            statusText.style.color = '#0f0';
         });
 
         document.getElementById('btn-connect-host').addEventListener('click', async () => {
