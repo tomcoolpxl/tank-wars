@@ -28,6 +28,18 @@ A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspi
 - **Up/Down Arrows**: Adjust firing power.
 - **Spacebar**: Fire projectile.
 
+### Debugging
+You can enable detailed debug logs in the browser console by setting global flags:
+```javascript
+window.DEBUG_SIM = true;     // Simulation events
+window.DEBUG_NET = true;     // Networking messages
+window.DEBUG_TANK = true;    // Tank physics
+window.DEBUG_PROJ = true;    // Projectile physics
+window.DEBUG_RULES = true;   // State machine
+window.DEBUG_TERRAIN = true; // Terrain changes
+window.DEBUG_HUD = true;     // HUD interactions
+```
+
 ## Technical Details
 
 ### Determinism

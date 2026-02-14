@@ -1,7 +1,9 @@
 import { RNG } from './rng.js';
 import { isqrt } from './isqrt.js';
 import { 
-    TERRAIN_SAMPLES, TERRAIN_STEP, TERRAIN_MIN_HEIGHT, TERRAIN_MAX_HEIGHT, WIDTH
+    TERRAIN_SAMPLES, TERRAIN_STEP, TERRAIN_MIN_HEIGHT, TERRAIN_MAX_HEIGHT, WIDTH,
+    TERRAIN_GEN_BASE_RANGE, TERRAIN_GEN_TREND_RANGE, TERRAIN_GEN_TREND_LIMIT,
+    TERRAIN_GEN_SMOOTH_PASSES
 } from './constants.js';
 
 export class Terrain {
@@ -21,38 +23,21 @@ export class Terrain {
         // Simple deterministic terrain generation using layered waves
         // This produces a "mountain-like" profile without overhangs.
         
-        const baseHeight = rng.nextInt(150, 300);
-        const numWaves = 4;
-        const waveAmplitudes = [60, 30, 15, 8];
-        const waveFrequencies = [0.01, 0.03, 0.07, 0.15];
-        
-        // Since we can't use Math.sin for simulation *path*, but this is *generation* 
-        // which happens once at start, it might be okay. 
-        // HOWEVER, the requirement says "No floating-point math in simulation-critical paths".
-        // Generation is simulation-critical if it must match on both peers.
-        // Let's use a simple deterministic wave-like generator instead of Math.sin.
-        
-        for (let i = 0; i < TERRAIN_SAMPLES; i++) {
-            let h = baseHeight;
-            // Use a very simple pseudo-sine based on RNG to keep it deterministic without Math.sin
-            // or just use deterministic noise. 
-            // For now, let's use a simple random walk with smoothing.
-            this.heights[i] = h;
-        }
+        const baseHeight = rng.nextInt(TERRAIN_GEN_BASE_RANGE[0], TERRAIN_GEN_BASE_RANGE[1]);
         
         // Random walk generation
         let currentH = baseHeight;
         let trend = 0;
         for (let i = 0; i < TERRAIN_SAMPLES; i++) {
-            trend += rng.nextInt(-2, 2);
-            trend = Math.max(-5, Math.min(5, trend));
+            trend += rng.nextInt(TERRAIN_GEN_TREND_RANGE[0], TERRAIN_GEN_TREND_RANGE[1]);
+            trend = Math.max(-TERRAIN_GEN_TREND_LIMIT, Math.min(TERRAIN_GEN_TREND_LIMIT, trend));
             currentH += trend;
             currentH = Math.max(TERRAIN_MIN_HEIGHT, Math.min(TERRAIN_MAX_HEIGHT, currentH));
             this.heights[i] = currentH;
         }
         
         // Smoothing pass
-        for (let pass = 0; pass < 3; pass++) {
+        for (let pass = 0; pass < TERRAIN_GEN_SMOOTH_PASSES; pass++) {
             for (let i = 1; i < TERRAIN_SAMPLES - 1; i++) {
                 this.heights[i] = Math.floor((this.heights[i-1] + this.heights[i] + this.heights[i+1]) / 3);
             }

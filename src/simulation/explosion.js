@@ -1,4 +1,4 @@
-import { FP, EXPLOSION_DAMAGE_RADIUS, EXPLOSION_DEFORM_RADIUS } from './constants.js';
+import { FP, EXPLOSION_DAMAGE_RADIUS, EXPLOSION_DEFORM_RADIUS, MAX_HEALTH } from './constants.js';
 
 export function applyExplosion(ex, ey, terrain, tanks) {
     // 1. Terrain deformation
@@ -19,9 +19,9 @@ export function applyExplosion(ex, ey, terrain, tanks) {
         const d2 = dx * dx + dy * dy;
         
         if (d2 < R2) {
-            // Quadratic falloff: damage = floor(100 * (1 - (d^2 / R^2)))
-            // damage = floor(100 * (R2 - d2) / R2)
-            const damage = Math.floor((100 * (R2 - d2)) / R2);
+            // Quadratic falloff: damage = floor(MAX_HEALTH * (1 - (d^2 / R^2)))
+            // damage = floor(MAX_HEALTH * (R2 - d2) / R2)
+            const damage = Math.floor((MAX_HEALTH * (R2 - d2)) / R2);
             tank.health = Math.max(0, tank.health - damage);
             if (tank.health <= 0) {
                 tank.alive = false;

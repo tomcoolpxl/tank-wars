@@ -1,4 +1,9 @@
-import { FP, GRAVITY_FP, PROJECTILE_LIFETIME_TICKS, WIND_ACCEL_FP, PROJECTILE_POWER_TO_VEL } from './constants.js';
+import { 
+    FP, GRAVITY_PER_TICK_FP, PROJECTILE_LIFETIME_TICKS, 
+    WIND_ACCEL_PER_TICK_FP, PROJECTILE_POWER_TO_VEL,
+    WIDTH, HEIGHT, PROJECTILE_SELF_COLLISION_TICKS,
+    TANK_DOME_RADIUS_X, TANK_DOME_RADIUS_Y
+} from './constants.js';
 import { getSin, getCos } from './trigLUT.js';
 import { mulFP } from './fixed.js';
 
@@ -30,11 +35,8 @@ export class Projectile {
         this.ticksAlive = 0;
         this.active = true;
         
-        this.g_per_tick_fp = Math.floor(GRAVITY_FP / 3600);
-        
-        // Use the WIND_ACCEL_FP constant (acceleration units per unit of wind)
-        // ax_wind_tick_fp = (wind * WIND_ACCEL_FP) / (60 * 60)
-        this.ax_wind_tick_fp = Math.floor((wind * WIND_ACCEL_FP) / 3600);
+        // Use the WIND_ACCEL_PER_TICK_FP constant
+        this.ax_wind_tick_fp = wind * WIND_ACCEL_PER_TICK_FP;
     }
 
     log(...args) {
@@ -47,7 +49,7 @@ export class Projectile {
         if (!this.active) return null;
 
         this.vx_fp += this.ax_wind_tick_fp;
-        this.vy_fp -= this.g_per_tick_fp;
+        this.vy_fp -= GRAVITY_PER_TICK_FP;
         
         this.x_fp += this.vx_fp;
         this.y_fp += this.vy_fp;
@@ -57,7 +59,7 @@ export class Projectile {
         const y = Math.floor(this.y_fp / FP);
 
         // 1. Bounds check
-        if (x < 0 || x >= 800 || y < 0 || y >= 600) {
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) {
             this.log(`Out of bounds: x=${x}, y=${y}`);
             this.active = false;
             return { type: 'out-of-bounds' };
@@ -77,15 +79,14 @@ export class Projectile {
             
             // Ignore shooter for the first few ticks to avoid self-collision at launch
             if (tank.id === this.shooterId) {
-                if (this.ticksAlive < 20) continue;
+                if (this.ticksAlive < PROJECTILE_SELF_COLLISION_TICKS) continue;
             }
 
             const tx = Math.floor(tank.x_fp / FP);
             const ty = Math.floor(tank.y_fp / FP);
             
             // Dome collision: bounding box for now, could be distance-based
-            // Width: 24 (tx-12 to tx+12), Height: 12 (ty to ty+12)
-            if (x >= tx - 12 && x <= tx + 12 && y >= ty && y <= ty + 12) {
+            if (x >= tx - TANK_DOME_RADIUS_X && x <= tx + TANK_DOME_RADIUS_X && y >= ty && y <= ty + TANK_DOME_RADIUS_Y) {
                 this.log(`Tank collision: tankId=${tank.id}, x=${x}, y=${y}`);
                 this.active = false;
                 return { type: 'explosion', x, y };

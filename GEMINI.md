@@ -46,6 +46,16 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 - **Coverage:** Measured via `@vitest/coverage-v8`. Current line coverage > 95%.
 - **See `docs/TESTING.md` for detailed instructions.**
 
+## Debugging and Logging
+The simulation and networking layers include granular logging that can be toggled via global `window` flags.
+- `window.DEBUG_SIM`: Logs main simulation steps and turn transitions.
+- `window.DEBUG_TANK`: Logs individual tank physics and stability updates.
+- `window.DEBUG_PROJ`: Logs projectile movement and collision details.
+- `window.DEBUG_RULES`: Logs game state machine changes.
+- `window.DEBUG_TERRAIN`: Logs terrain generation and deformation.
+- `window.DEBUG_NET`: Logs networking messages and P2P events.
+- `window.DEBUG_HUD`: Logs HUD button interactions and updates.
+
 ## Development Rules
 1. **Determinism:** Never use `Math.random()`, `Date.now()`, or floating-point numbers in `src/simulation/`.
 2. **Fixed Timestep:** Simulation logic should be stepped at 60Hz.

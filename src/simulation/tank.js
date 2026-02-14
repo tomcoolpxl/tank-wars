@@ -1,4 +1,9 @@
-import { FP, TANK_WIDTH, TANK_HEIGHT, GRAVITY_FP, FRICTION_KINETIC_FP, FRICTION_STATIC_THRESHOLD } from './constants.js';
+import { 
+    FP, TANK_WIDTH, TANK_HEIGHT, GRAVITY_PER_TICK_FP, 
+    MAX_HEALTH, TANK_START_AIM_ANGLE, TANK_START_AIM_POWER,
+    TANK_SLOPE_SAMPLE_DIST, TANK_GROUND_EPSILON, TANK_STABILITY_THRESHOLD,
+    WIDTH
+} from './constants.js';
 import { mulFP, divFP, clamp } from './fixed.js';
 import { getSin, getAtan2 } from './trigLUT.js';
 import { isqrt } from './isqrt.js';
@@ -10,18 +15,15 @@ export class Tank {
         this.y_fp = y_fp;
         this.vx_fp = 0;
         this.vy_fp = 0;
-        this.health = 100;
+        this.health = MAX_HEALTH;
         this.alive = true;
         this.baseAngleDeg = 0; // Deterministic rotation in degrees
         this.stable = false;
         
         // Aiming state (Phase 3)
         // Now relative to the base (0 is flat right, 90 is up, 180 is flat left)
-        this.aimAngle = 90; // integer degrees, relative to platform
-        this.aimPower = 50; // integer 0..100
-        
-        // Per-tick gravity in fixed-point
-        this.g_per_tick_fp = Math.floor(GRAVITY_FP / 3600);
+        this.aimAngle = TANK_START_AIM_ANGLE; // integer degrees, relative to platform
+        this.aimPower = TANK_START_AIM_POWER; // integer 0..100
     }
 
     log(...args) {
@@ -46,13 +48,13 @@ export class Tank {
         }
 
         // 4.5 Terrain contact and tolerance
-        const epsilon = 1; // 1 pixel
+        const epsilon = TANK_GROUND_EPSILON;
         
         // Calculate slope for rotation
-        const hL = terrain.getHeightAtX(x - 4);
-        const hR = terrain.getHeightAtX(x + 4);
+        const hL = terrain.getHeightAtX(x - TANK_SLOPE_SAMPLE_DIST);
+        const hR = terrain.getHeightAtX(x + TANK_SLOPE_SAMPLE_DIST);
         // Use deterministic getAtan2
-        this.baseAngleDeg = getAtan2(hR - hL, 8);
+        this.baseAngleDeg = getAtan2(hR - hL, TANK_SLOPE_SAMPLE_DIST * 2);
 
         if (tankBottomY <= groundY + epsilon && tankBottomY >= groundY - epsilon) {
             // On ground
@@ -61,7 +63,7 @@ export class Tank {
             this.vx_fp = 0; // No horizontal movement
         } else if (tankBottomY > groundY) {
             // In air
-            this.vy_fp -= this.g_per_tick_fp;
+            this.vy_fp -= GRAVITY_PER_TICK_FP;
             this.vx_fp = 0; // Fall straight down
             this.stable = false;
         } else {
@@ -78,7 +80,7 @@ export class Tank {
         // Bounds check
         const finalX = Math.floor(this.x_fp / FP);
         const finalY = Math.floor(this.y_fp / FP);
-        if (finalX < 0 || finalX >= 800 || finalY < 0) {
+        if (finalX < 0 || finalX >= WIDTH || finalY < 0) {
             this.health = 0;
             this.alive = false;
         }
@@ -89,7 +91,7 @@ export class Tank {
         
         // Update stability
         // Thresholds adjusted for higher FP (1000 FP units = 0.001 pixels/tick)
-        if (Math.abs(this.vx_fp) < 1000 && Math.abs(this.vy_fp) < 1000) {
+        if (Math.abs(this.vx_fp) < TANK_STABILITY_THRESHOLD && Math.abs(this.vy_fp) < TANK_STABILITY_THRESHOLD) {
             this.stable = true;
         } else {
             this.stable = false;

@@ -68,9 +68,25 @@ Uses **PeerJS** for automated WebRTC P2P communication.
 - **SHOT Messages:** Transmit angle and power. Validated for range and turn ownership.
 - **State Hashes:** After every turn, clients exchange a hash of the simulation state to verify determinism.
 
+## 4. Debugging and Logging
+
+The system uses a non-intrusive logging pattern to assist in debugging complex deterministic failures.
+
+### Logging Pattern
+Each simulation component implements a `.log()` method that checks for a specific global flag. This avoids console noise during normal gameplay while allowing deep inspection of physics or networking issues.
+
+- **Simulation (`DEBUG_SIM`)**: Tracks high-level logic (firing, state transitions).
+- **Physics (`DEBUG_TANK`, `DEBUG_PROJ`)**: Tracks per-tick position and velocity updates.
+- **Rules (`DEBUG_RULES`)**: Tracks turn timers and wind generation.
+- **Networking (`DEBUG_NET`)**: Tracks P2P message payloads and connection states.
+- **HUD (`DEBUG_HUD`)**: Tracks button presses and UI updates.
+
+### Desync Debugging
+When a desync occurs (detected via `handleRemoteHash`), the Host automatically sends its full state to the Joiner (`SYNC` message). Setting `DEBUG_NET = true` is the primary way to investigate why hashes might have diverged.
+
 ---
 
-## 4. Testing Strategy
+## 5. Testing Strategy
 
 ### Determinism Tests (`tests/determinism.js`)
 - Runs two identical simulations locally with a scripted set of shots.

@@ -65,7 +65,15 @@ Determinism is the most critical aspect of the project. It is verified in three 
 3.  **Standalone Harness:** `tests/determinism.js` can be used to run two parallel simulations headlessly and verify they never drift.
 4.  **Seed Sync:** Verified in E2E tests to ensure both peers start with the identical PRNG seed provided by the Host.
 
-## 5. Continuous Integration (CI)
+## 5. Debugging Test Failures
+
+If a test fails, especially an E2E test, you can gain more insight by enabling debug logs within the test environment.
+
+- **Simulation Logs:** Many E2E tests output `PAGE: [SIM] ...` logs directly to the terminal.
+- **Verbose Mode:** Run Playwright with `DEBUG=pw:browser` for browser-level issues.
+- **Manual Debugging:** Run the game in dev mode (`npm run dev`) and set `window.DEBUG_NET = true` in the console to watch the handshake and shot exchange in real-time.
+
+## 6. Continuous Integration (CI)
 
 The project is designed to be CI-ready. Note that E2E tests require a display buffer (e.g., `xvfb-run`) and system dependencies for Chromium if run on a headless Linux server.
 

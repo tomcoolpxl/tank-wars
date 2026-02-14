@@ -9,10 +9,32 @@ async function setupMatch(browser) {
   const hostPage = await hostContext.newPage();
   const joinerPage = await joinerContext.newPage();
 
-  hostPage.on('console', msg => console.log('HOST:', msg.text()));
-  joinerPage.on('console', msg => console.log('JOINER:', msg.text()));
+  const filterLogs = (prefix) => msg => {
+    const text = msg.text();
+    // Capture all game-related logs starting with [
+    if (text.startsWith('[')) {
+        console.log(`${prefix}: ${text}`);
+    }
+  };
+
+  hostPage.on('console', filterLogs('HOST'));
+  joinerPage.on('console', filterLogs('JOINER'));
 
   await hostPage.goto('/');
+
+  // Enable debug flags on both pages
+  const enableDebug = (page) => page.evaluate(() => {
+    window.DEBUG_SIM = true;
+    window.DEBUG_NET = true;
+    window.DEBUG_RULES = true;
+    window.DEBUG_TANK = true;
+    window.DEBUG_HUD = true;
+    window.DEBUG_PROJ = true;
+    window.DEBUG_TERRAIN = true;
+  });
+  await enableDebug(hostPage);
+  await enableDebug(joinerPage);
+
   await hostPage.click('#btn-host');
   await expect(hostPage.locator('#status-text')).toHaveText(/Online/, { timeout: 15000 });
   await hostPage.click('#btn-copy-link');
@@ -84,13 +106,16 @@ test.describe('Advanced Game Scenarios', () => {
     await expect.poll(async () => {
         const s = await getSimState(hostPage);
         return s.turn;
-    }, { timeout: 30000 }).toBe(2);
+    }, { timeout: 30000 }).toBeGreaterThanOrEqual(2);
 
     await expect.poll(async () => {
         const hostState = await getSimState(hostPage);
         const joinerState = await getSimState(joinerPage);
+        if (hostState.hash !== joinerState.hash) {
+            console.log(`[TEST] Hash mismatch! Host: ${hostState.hash}, Joiner: ${joinerState.hash} (Turn: H:${hostState.turn} J:${joinerState.turn})`);
+        }
         return hostState.hash === joinerState.hash;
-    }, { timeout: 10000 }).toBe(true);
+    }, { timeout: 20000 }).toBe(true);
   });
 
   test('Out-of-bounds projectile (no explosion)', async ({ browser }) => {

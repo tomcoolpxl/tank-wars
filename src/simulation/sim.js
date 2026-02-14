@@ -6,7 +6,8 @@ import { Rules, GameState } from './rules.js';
 import { applyExplosion } from './explosion.js';
 import { getSin, getCos } from './trigLUT.js';
 import { 
-    FP, STABILIZATION_CAP_TICKS, TANK_SPAWN_LEFT_RANGE, TANK_SPAWN_RIGHT_RANGE 
+    FP, STABILIZATION_CAP_TICKS, TANK_SPAWN_LEFT_RANGE, TANK_SPAWN_RIGHT_RANGE,
+    TANK_SPAWN_Y_OFFSET, PROJECTILE_MAX_POWER, PROJECTILE_SPAWN_OFFSET
 } from './constants.js';
 
 export class Simulation {
@@ -41,7 +42,7 @@ export class Simulation {
     createTank(id, range) {
         const x = this.rng.nextInt(range[0], range[1]);
         const y = this.terrain.getHeightAtX(x);
-        return new Tank(id, x * FP, (y + 6) * FP);
+        return new Tank(id, x * FP, (y + TANK_SPAWN_Y_OFFSET) * FP);
     }
 
     start() {
@@ -82,7 +83,7 @@ export class Simulation {
                 if (activeTank.aimAngle < 0) activeTank.aimAngle = 0;
                 if (activeTank.aimAngle > 180) activeTank.aimAngle = 180;
                 if (activeTank.aimPower < 0) activeTank.aimPower = 0;
-                if (activeTank.aimPower > 100) activeTank.aimPower = 100;
+                if (activeTank.aimPower > PROJECTILE_MAX_POWER) activeTank.aimPower = PROJECTILE_MAX_POWER;
                 break;
 
             case GameState.PROJECTILE_FLIGHT:
@@ -130,8 +131,8 @@ export class Simulation {
         activeTank.aimPower = power | 0;
 
         const totalAngle = (activeTank.baseAngleDeg + activeTank.aimAngle) | 0;
-        const spawnX = activeTank.x_fp + Math.floor(20 * getCos(totalAngle));
-        const spawnY = activeTank.y_fp + Math.floor(20 * getSin(totalAngle));
+        const spawnX = activeTank.x_fp + Math.floor(PROJECTILE_SPAWN_OFFSET * getCos(totalAngle));
+        const spawnY = activeTank.y_fp + Math.floor(PROJECTILE_SPAWN_OFFSET * getSin(totalAngle));
 
         this.projectile = new Projectile(spawnX, spawnY, totalAngle, activeTank.aimPower, this.rules.wind, activeTank.id);
         this.rules.state = GameState.PROJECTILE_FLIGHT;

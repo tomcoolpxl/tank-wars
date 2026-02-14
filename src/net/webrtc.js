@@ -10,6 +10,12 @@ export class NetworkManager {
         this.peerId = null;
     }
 
+    log(...args) {
+        if (typeof window !== 'undefined' && window.DEBUG_NET) {
+            console.log('[NET]', ...args);
+        }
+    }
+
     /**
      * Initialize PeerJS and start hosting.
      * Returns the Peer ID.
@@ -21,7 +27,7 @@ export class NetworkManager {
 
             this.peer.on('open', (id) => {
                 this.peerId = id;
-                console.log('Peer ID:', id);
+                this.log('Peer ID:', id);
                 resolve(id);
             });
 
@@ -33,7 +39,9 @@ export class NetworkManager {
             });
 
             this.peer.on('error', (err) => {
-                console.error('Peer error:', err);
+                if (typeof window !== 'undefined' && window.DEBUG_NET) {
+                    console.error('[NET] Peer error:', err);
+                }
                 if (this.onConnectionStateChangeCallback) {
                     this.onConnectionStateChangeCallback('failed');
                 }
@@ -61,7 +69,9 @@ export class NetworkManager {
             });
 
             this.peer.on('error', (err) => {
-                console.error('Peer error:', err);
+                if (typeof window !== 'undefined' && window.DEBUG_NET) {
+                    console.error('[NET] Peer error:', err);
+                }
                 if (this.onConnectionStateChangeCallback) {
                     this.onConnectionStateChangeCallback('failed');
                 }
@@ -72,28 +82,30 @@ export class NetworkManager {
 
     setupConnection(conn) {
         conn.on('open', () => {
-            console.log(`NET: Connection opened with peer ${conn.peer}`);
+            this.log(`Connection opened with peer ${conn.peer}`);
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback('connected');
             }
         });
 
         conn.on('data', (data) => {
-            console.log('NET: Received:', JSON.stringify(data));
+            this.log('Received:', JSON.stringify(data));
             if (this.onMessageCallback) {
                 this.onMessageCallback(data);
             }
         });
 
         conn.on('close', () => {
-            console.log('NET: Connection closed');
+            this.log('Connection closed');
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback('closed');
             }
         });
 
         conn.on('error', (err) => {
-            console.error('NET: Connection error:', err);
+            if (typeof window !== 'undefined' && window.DEBUG_NET) {
+                console.error('[NET] Connection error:', err);
+            }
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback('failed');
             }
@@ -102,10 +114,12 @@ export class NetworkManager {
 
     send(message) {
         if (this.connection && this.connection.open) {
-            console.log('NET: Sending:', JSON.stringify(message));
+            this.log('Sending:', JSON.stringify(message));
             this.connection.send(message);
         } else {
-            console.warn('NET: Attempted to send while disconnected:', JSON.stringify(message));
+            if (typeof window !== 'undefined' && window.DEBUG_NET) {
+                console.warn('[NET] Attempted to send while disconnected:', JSON.stringify(message));
+            }
         }
     }
 

@@ -2,25 +2,28 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Input Finesse - Fine-tuning buttons', () => {
     test('should modify angle and power via HUD buttons', async ({ page }) => {
-        page.on('console', msg => {
+        const filterLogs = (prefix) => msg => {
             const text = msg.text();
-            if (text.startsWith('[SIM]') || text.startsWith('[NET]') || text.startsWith('[TEST]') || 
-                text.startsWith('[RULES]') || text.startsWith('[TANK') || text.startsWith('[HUD]')) {
-                console.log('PAGE:', text);
+            if (text.startsWith('[')) {
+                console.log(`${prefix}: ${text}`);
             }
-        });
+        };
+
+        page.on('console', filterLogs('HOST'));
 
         await page.goto('http://localhost:5173');
 
         // Enable ALL debug flags
-        await page.evaluate(() => {
+        const enableDebug = (p) => p.evaluate(() => {
             window.DEBUG_SIM = true;
             window.DEBUG_NET = true;
             window.DEBUG_RULES = true;
             window.DEBUG_TANK = true;
             window.DEBUG_HUD = true;
             window.DEBUG_PROJ = true;
+            window.DEBUG_TERRAIN = true;
         });
+        await enableDebug(page);
 
         // Host a game
         await page.click('#btn-host');
@@ -30,7 +33,9 @@ test.describe('Input Finesse - Fine-tuning buttons', () => {
         // Open second player
         const browser = page.context().browser();
         const page2 = await browser.newPage();
+        page2.on('console', filterLogs('JOINER'));
         await page2.goto(`http://localhost:5173#join=${roomId}`);
+        await enableDebug(page2);
         
         await expect(page.locator('canvas')).toBeVisible({ timeout: 10000 });
         await expect(page2.locator('canvas')).toBeVisible({ timeout: 10000 });

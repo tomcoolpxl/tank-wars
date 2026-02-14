@@ -1,4 +1,4 @@
-import { TURN_DURATION_TICKS } from './constants.js';
+import { TURN_DURATION_TICKS, WIND_MAX_ABS } from './constants.js';
 
 export const GameState = {
     LOBBY: 'LOBBY',
@@ -36,9 +36,9 @@ export class Rules {
     startTurn(rng) {
         this.turnTimer = TURN_DURATION_TICKS;
         // Wind: triangular distribution centered at 0
-        // wind = (randInt(-15, 15) + randInt(-15, 15)) / 2
-        const r1 = rng.nextInt(-15, 15);
-        const r2 = rng.nextInt(-15, 15);
+        // wind = (randInt(-WIND_MAX_ABS, WIND_MAX_ABS) + randInt(-WIND_MAX_ABS, WIND_MAX_ABS)) / 2
+        const r1 = rng.nextInt(-WIND_MAX_ABS, WIND_MAX_ABS);
+        const r2 = rng.nextInt(-WIND_MAX_ABS, WIND_MAX_ABS);
         // Use Math.trunc to ensure consistent rounding towards zero for both positive and negative results
         this.wind = Math.trunc((r1 + r2) / 2);
         this.log(`startTurn(): turn=${this.turnNumber}, player=${this.activePlayerIndex}, wind=${this.wind}`);

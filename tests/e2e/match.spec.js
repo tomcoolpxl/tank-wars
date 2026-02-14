@@ -10,10 +10,30 @@ test('Full match setup and gameplay (PeerJS)', async ({ browser }) => {
   const hostPage = await hostContext.newPage();
   const joinerPage = await joinerContext.newPage();
 
-  hostPage.on('console', msg => console.log('HOST:', msg.text()));
-  joinerPage.on('console', msg => console.log('JOINER:', msg.text()));
+  const filterLogs = (prefix) => msg => {
+    const text = msg.text();
+    if (text.startsWith('[')) {
+        console.log(`${prefix}: ${text}`);
+    }
+  };
+
+  hostPage.on('console', filterLogs('HOST'));
+  joinerPage.on('console', filterLogs('JOINER'));
 
   await hostPage.goto('/');
+
+  // Enable debug flags on both pages
+  const enableDebug = (page) => page.evaluate(() => {
+    window.DEBUG_SIM = true;
+    window.DEBUG_NET = true;
+    window.DEBUG_RULES = true;
+    window.DEBUG_TANK = true;
+    window.DEBUG_HUD = true;
+    window.DEBUG_PROJ = true;
+    window.DEBUG_TERRAIN = true;
+  });
+  await enableDebug(hostPage);
+  await enableDebug(joinerPage);
 
   // 1. Handshake
   await hostPage.click('#btn-host');
