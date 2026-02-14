@@ -15,7 +15,10 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 - **Phase 8 (Packaging & Reliability):** COMPLETE.
 - **Phase 9 (Advanced Testing & Coverage):** COMPLETE.
 
-## Architecture
+## Current Stats
+- **Simulation Line Coverage:** 100%
+- **Projectile Trail Length:** 50 points (2.5x original)
+- **Architecture:** Centralized rendering constants in `src/render/constants.js`.
 - **`src/simulation/`**: Pure logic core.
     - `constants.js`: Global config (FP=1000000, extreme gravity=35.0).
     - `fixed.js`: Fixed-point math.

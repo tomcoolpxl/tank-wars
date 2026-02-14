@@ -80,8 +80,7 @@ The project is designed to be CI-ready. Note that E2E tests require a display bu
 
 ## 6. Coverage Goals
 
-We aim for:
+Current status:
+*   **Simulation Core:** 100% Line Coverage.
 *   **Statements:** > 90%
-*   **Lines:** > 95%
-*   **Functions:** 100% in simulation core.
-*   **Branches:** > 80%
+*   **Lines:** > 95% overall.

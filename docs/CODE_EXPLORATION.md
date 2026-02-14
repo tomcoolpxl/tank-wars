@@ -48,6 +48,7 @@ Phaser acts as a "view" in the MVC pattern.
 
 ### Renderers (`src/render/`)
 - Specialized classes (`TerrainRenderer`, `TankRenderer`, etc.) handle the drawing of simulation objects.
+- **Constants:** All visual parameters (colors, depths, trail length, pulse speeds) are centralized in `src/render/constants.js` to eliminate magic numbers.
 - They use Phaser's Graphics and Containers to create a neon/glow aesthetic.
 - **One-way Flow:** Renderers read from the simulation state every frame but never modify it.
 
