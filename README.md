@@ -34,7 +34,7 @@ A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspi
 ## Technical Details
 
 ### Determinism
-The simulation runs at a fixed 60Hz. All physics calculations use fixed-point arithmetic (1000x scale) to avoid floating-point drift between different browsers or operating systems.
+The simulation runs at a fixed 60Hz. All physics calculations use fixed-point arithmetic (1,000,000x scale) to avoid floating-point drift between different browsers or operating systems.
 
 ### Networking
 WebRTC DataChannels are used for low-latency input exchange. We use a manual signaling flow to remain entirely serverless. 

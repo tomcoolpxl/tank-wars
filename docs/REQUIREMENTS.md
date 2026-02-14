@@ -174,10 +174,12 @@ ANGLE INPUT AND QUANTIZATION
 
 5.2 Initial velocity from power
 
-* v0 = power * 4 logical units/s.
+* v0 = power * 3 logical units/s.
 * vx0 = v0 * cos(launchAngle) / 60
 * vy0 = v0 * sin(launchAngle) / 60
 * cos/sin computed via deterministic integer lookup table indexed by integer degree.
+* Minimum velocity: If power > 0, initial vx and vy are clamped to at least 1 logical unit/tick in the intended direction.
+* Launch Position: Projectile spawns at the tip of the tank barrel (20 units from center) to avoid immediate self-collision.
 
 5.3 Wind
 Wind is constant for the duration of a turn.
@@ -194,7 +196,7 @@ Wind application:
 
 5.4 Extreme Gravity
 
-* Gravity constant: g = 25.0 logical units/s^2 downward.
+* Gravity constant: g = 35.0 logical units/s^2 downward.
 * High gravity necessitates steep firing angles.
 
 5.5 Projectile lifetime cap
@@ -207,6 +209,7 @@ Wind application:
 * Terrain collision: y_fp / FP <= terrainHeight at x.
 * Tank collision: Half-circle dome check.
   * Intersection with box: x in [tx-12, tx+12] and y in [ty, ty+12].
+  * Shooter Immunity: The projectile ignores collisions with the shooter for the first 20 ticks.
 
 ---
 
@@ -258,6 +261,7 @@ For each tank:
 HUD:
 * Relative Angle shown.
 * Health, Timer, Wind, Active Player.
+* No debug text (ticks/hashes) shown in production HUD.
 
 Controls:
 * Left/Right: relative angle.
@@ -272,3 +276,4 @@ Controls:
 * Renderer uses `HEIGHT - y` for all positions.
 * Tanks rendered as domes (half-circles) + gun barrels.
 * Gun barrel angle = -(baseAngleDeg + relativeAngle) in screen space.
+* No health bars rendered on top of tank sprites (HUD only).

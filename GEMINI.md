@@ -17,7 +17,7 @@ Tank Wars is a deterministic, peer-to-peer (P2P) artillery game. It uses a fixed
 
 ## Architecture
 - **`src/simulation/`**: Pure logic core.
-    - `constants.js`: Global config (FP=1000000, extreme gravity=25.0).
+    - `constants.js`: Global config (FP=1000000, extreme gravity=35.0).
     - `fixed.js`: Fixed-point math.
     - `rng.js`: Deterministic PRNG.
     - `trigLUT.js`: Precomputed sin/cos.

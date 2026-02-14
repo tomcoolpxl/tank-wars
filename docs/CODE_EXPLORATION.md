@@ -34,7 +34,7 @@ The simulation ensures that given the same seed and input sequence, the game sta
 
 ### Physics (`tank.js`, `projectile.js`)
 - **Tanks:** Non-movable platforms that fall under gravity and tilt to match the terrain slope.
-- **Projectiles:** Affected by wind (fixed-point) and extreme gravity (25.0). Collision detection uses the terrain heightmap and tank domes.
+- **Projectiles:** Affected by wind (fixed-point) and extreme gravity (35.0). Collision detection uses the terrain heightmap and tank domes.
 
 ---
 
@@ -51,6 +51,7 @@ Phaser acts as a "view" in the MVC pattern.
 - Specialized classes (`TerrainRenderer`, `TankRenderer`, etc.) handle the drawing of simulation objects.
 - They use Phaser's Graphics and Containers to create a neon/glow aesthetic.
 - **One-way Flow:** Renderers read from the simulation state every frame but never modify it.
+- **Clean UI:** Redundant elements like in-world health bars and debug overlays are disabled for a cleaner experience.
 
 ---
 
@@ -59,7 +60,7 @@ Phaser acts as a "view" in the MVC pattern.
 Uses P2P WebRTC DataChannels for low-latency communication.
 
 ### Connection Protocol
-- **Lobby:** Players exchange SDP offers/answers and ICE candidates.
+- **Lobby:** Players exchange SDP offers/answers and ICE candidates. Includes a compact, scrollable UI for signaling.
 - **DataChannel:** Configured as `ordered: true` to ensure turn messages arrive in sequence.
 
 ### Synchronization & Validation
@@ -89,4 +90,4 @@ Uses P2P WebRTC DataChannels for low-latency communication.
 
 - `PRECISION`: 1,000,000 (Fixed-point scaling).
 - `WIDTH` / `HEIGHT`: 800x600 (Logical simulation bounds).
-- `GRAVITY_FP`: 25,000,000 (Extreme gravity).
+- `GRAVITY_FP`: 35,000,000 (Extreme gravity).
