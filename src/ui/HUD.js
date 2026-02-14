@@ -75,9 +75,6 @@ export class HUD {
     }
 
     createDOMButtons() {
-        const parent = document.getElementById('game-container');
-        if (!parent) return;
-
         this.domButtons = {};
         const configs = [
             { id: 'angle-down', text: '-', x: 160, y: 518 },
@@ -93,9 +90,6 @@ export class HUD {
             btn.innerText = cfg.text;
             btn.setAttribute('data-testid', cfg.id);
             btn.style.cssText = `
-                position: absolute;
-                left: ${cfg.x}px;
-                top: ${cfg.y}px;
                 width: 30px;
                 height: 30px;
                 background: #333;
@@ -130,7 +124,7 @@ export class HUD {
             btn.addEventListener('touchstart', start, { passive: false });
             btn.addEventListener('touchend', stop);
 
-            parent.appendChild(btn);
+            this.scene.add.dom(cfg.x, cfg.y, btn).setOrigin(0, 0);
             this.domButtons[cfg.id] = btn;
         });
     }

@@ -34,6 +34,9 @@ export class GameScene extends Phaser.Scene {
         this.replayIndex = 0;
         this.lastTurnNumber = 0;
         this.lastGameState = null;
+        this.pendingRemoteHashes = {};
+        this.localTurnHashes = {};
+        this.pendingRemoteShots = []; // Buffer for SHOT messages that arrive early
     }
 
     log(...args) {
@@ -91,43 +94,78 @@ export class GameScene extends Phaser.Scene {
 
     handleRemoteShot(msg) {
         this.log(`Received SHOT:`, msg);
-        if (this.simulation.rules.state !== GameState.TURN_AIM) {
-            this.log(`Ignoring SHOT: State is ${this.simulation.rules.state}`);
-            return;
-        }
-        if (this.simulation.rules.activePlayerIndex === this.localPlayerIndex) {
-            this.abortMatch('Protocol Error: SHOT on our turn');
-            return;
-        }
-        if (msg.turnNumber !== this.simulation.rules.turnNumber) {
-            this.abortMatch(`Protocol Error: Turn mismatch`);
-            return;
-        }
+        // Buffer the shot instead of rejecting it if we're not ready yet
+        this.pendingRemoteShots.push(msg);
+        this.processPendingShots();
+    }
 
-        const angle = Math.floor(msg.angle);
-        const power = Math.floor(msg.power);
-        const isInvalid = !Number.isInteger(angle) || angle < 0 || angle > 180 || 
-                          !Number.isInteger(power) || power < 0 || power > 100;
+    processPendingShots() {
+        if (this.simulation.rules.state !== GameState.TURN_AIM) return;
         
-        if (isInvalid) {
-            this.abortMatch(`Security Error: Invalid parameters`);
-            return;
-        }
+        const currentTurn = this.simulation.rules.turnNumber;
+        const activeIdx = this.simulation.rules.activePlayerIndex;
+        
+        for (let i = 0; i < this.pendingRemoteShots.length; i++) {
+            const msg = this.pendingRemoteShots[i];
+            
+            // Only process shots for the CURRENT turn
+            if (msg.turnNumber === currentTurn) {
+                if (activeIdx === this.localPlayerIndex) {
+                    this.abortMatch('Protocol Error: SHOT on our turn');
+                    return;
+                }
 
-        this.recordShot(angle, power);
-        this.simulation.fire(angle, power, this.simulation.rules.activePlayerIndex);
+                const angle = Math.floor(msg.angle);
+                const power = Math.floor(msg.power);
+                const isInvalid = !Number.isInteger(angle) || angle < 0 || angle > 180 || 
+                                  !Number.isInteger(power) || power < 0 || power > 100;
+                
+                if (isInvalid) {
+                    this.abortMatch(`Security Error: Invalid parameters`);
+                    return;
+                }
+
+                this.recordShot(angle, power);
+                this.simulation.fire(angle, power, activeIdx);
+                
+                // Remove the processed shot
+                this.pendingRemoteShots.splice(i, 1);
+                return; // One shot per turn
+            } else if (msg.turnNumber < currentTurn) {
+                // Stale shot, remove it
+                this.pendingRemoteShots.splice(i, 1);
+                i--;
+            }
+            // If msg.turnNumber > currentTurn, keep it buffered for future
+        }
     }
 
     handleRemoteHash(msg) {
-        if (!this.isHost) return;
-        const myHash = this.simulation.getStateHash();
-        if (msg.hash !== myHash) {
-            console.warn(`Desync at turn ${msg.turnNumber}! Local: ${myHash}, Remote: ${msg.hash}`);
-            this.networkManager.send({
-                type: 'SYNC',
-                state: this.simulation.getState(),
-                turnNumber: msg.turnNumber
-            });
+        this.pendingRemoteHashes[msg.turnNumber] = msg.hash;
+        this.validateHashes(msg.turnNumber);
+    }
+
+    validateHashes(turnNumber) {
+        const remoteHash = this.pendingRemoteHashes[turnNumber];
+        const localHash = this.localTurnHashes[turnNumber];
+        
+        if (remoteHash !== undefined && localHash !== undefined) {
+            if (remoteHash !== localHash) {
+                console.warn(`Desync at turn ${turnNumber}! Local: ${localHash}, Remote: ${remoteHash}`);
+                // Only host initiates SYNC
+                if (this.isHost) {
+                    this.networkManager.send({
+                        type: 'SYNC',
+                        state: this.simulation.getState(),
+                        turnNumber: turnNumber
+                    });
+                }
+            } else {
+                this.log(`Sync confirmed for turn ${turnNumber}`);
+            }
+            // Cleanup
+            delete this.pendingRemoteHashes[turnNumber];
+            delete this.localTurnHashes[turnNumber];
         }
     }
 
@@ -156,13 +194,19 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    sendHash(turnNumber) {
+    sendHash(turnNumber, hash) {
         if (!this.networkManager || this.isReplaying) return;
+        const finalHash = (hash !== undefined) ? hash : this.simulation.getStateHash();
+        
+        this.localTurnHashes[turnNumber] = finalHash;
+
         this.networkManager.send({
             type: 'HASH',
             turnNumber: turnNumber,
-            hash: this.simulation.getStateHash()
+            hash: finalHash
         });
+
+        this.validateHashes(turnNumber);
     }
 
     recordShot(angle, power) {
@@ -178,10 +222,9 @@ export class GameScene extends Phaser.Scene {
 
         let ticksProcessed = 0;
         while (this.tickAccumulator >= TICK_DURATION_MS) {
-            // Only force autoFireEnabled if we haven't manually disabled it for tests/debug
-            if (this.simulation.autoFireEnabled !== false) {
-                this.simulation.autoFireEnabled = localTurn;
-            }
+            // Always ensure autoFireEnabled matches our local turn status
+            this.simulation.autoFireEnabled = localTurn;
+            
             const prevState = this.simulation.rules.state;
             const prevTurn = this.simulation.rules.turnNumber;
 
@@ -195,6 +238,10 @@ export class GameScene extends Phaser.Scene {
 
             this.simulation.step(inputs);
             
+            if (isAiming) {
+                this.processPendingShots();
+            }
+
             if (this.simulation.rules.turnNumber !== prevTurn) {
                 this.sendHash(prevTurn);
             }

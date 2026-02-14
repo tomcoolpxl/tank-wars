@@ -21,6 +21,7 @@ describe('Simulation Lifecycle', () => {
     it('should handle turn timer depletion (auto-fire)', () => {
         const sim = new Simulation(123);
         sim.start();
+        sim.autoFireEnabled = true;
         sim.rules.turnTimer = 1;
         sim.step({});
         expect(sim.rules.state).toBe(GameState.PROJECTILE_FLIGHT);
@@ -166,6 +167,7 @@ describe('Simulation Lifecycle', () => {
     it('should handle turn timer already at 0', () => {
         const sim = new Simulation(123);
         sim.start();
+        sim.autoFireEnabled = true;
         sim.rules.turnTimer = 0;
         sim.step({});
         expect(sim.rules.state).toBe(GameState.PROJECTILE_FLIGHT);

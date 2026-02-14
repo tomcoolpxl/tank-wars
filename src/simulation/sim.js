@@ -30,7 +30,7 @@ export class Simulation {
         this.rules = new Rules();
         this.tickCount = 0;
         this.events = [];
-        this.autoFireEnabled = true;
+        this.autoFireEnabled = false;
     }
 
     log(...args) {
