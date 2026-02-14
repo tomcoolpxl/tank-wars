@@ -26,34 +26,34 @@ export class HUD {
         const statStyle = { font: 'bold 16px monospace', fill: textColor };
 
         // Player 1 Area
-        this.p1Label = this.scene.add.text(20, 10, 'PLAYER 1', labelStyle);
-        this.p1HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(20, 28, 200, 12);
+        this.p1Label = this.scene.add.text(20, 15, 'PLAYER 1', labelStyle);
+        this.p1HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(20, 35, 200, 12);
         this.p1HealthBar = this.scene.add.graphics();
-        this.p1AngleText = this.scene.add.text(20, 45, 'ANG: 45°', statStyle);
-        this.p1PowerText = this.scene.add.text(20, 70, 'PWR: 50', statStyle);
+        this.p1AngleText = this.scene.add.text(20, 60, 'ANG: 45°', statStyle);
+        this.p1PowerText = this.scene.add.text(20, 95, 'PWR: 50', statStyle);
         this.container.add([this.p1Label, this.p1HealthBG, this.p1HealthBar, this.p1AngleText, this.p1PowerText]);
 
         // Player 2 Area
-        this.p2Label = this.scene.add.text(800 - 20, 10, 'PLAYER 2', labelStyle).setOrigin(1, 0);
-        this.p2HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(800 - 220, 28, 200, 12);
+        this.p2Label = this.scene.add.text(800 - 20, 15, 'PLAYER 2', labelStyle).setOrigin(1, 0);
+        this.p2HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(800 - 220, 35, 200, 12);
         this.p2HealthBar = this.scene.add.graphics();
-        this.p2AngleText = this.scene.add.text(800 - 20, 45, 'ANG: 45°', statStyle).setOrigin(1, 0);
-        this.p2PowerText = this.scene.add.text(800 - 20, 70, 'PWR: 50', statStyle).setOrigin(1, 0);
+        this.p2AngleText = this.scene.add.text(800 - 20, 60, 'ANG: 45°', statStyle).setOrigin(1, 0);
+        this.p2PowerText = this.scene.add.text(800 - 20, 95, 'PWR: 50', statStyle).setOrigin(1, 0);
         this.container.add([this.p2Label, this.p2HealthBG, this.p2HealthBar, this.p2AngleText, this.p2PowerText]);
 
         // Center Area (Timer & Wind)
-        this.timerText = this.scene.add.text(400, 20, '20', { font: 'bold 24px monospace', fill: textColor }).setOrigin(0.5, 0.5);
-        this.timerLabel = this.scene.add.text(400, 40, 'SEC', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.timerText = this.scene.add.text(400, 25, '20', { font: 'bold 24px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.timerLabel = this.scene.add.text(400, 45, 'SEC', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
         this.container.add([this.timerText, this.timerLabel]);
 
-        this.windLabel = this.scene.add.text(400, 55, 'WIND', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
-        this.windText = this.scene.add.text(400, 68, '0', { font: 'bold 16px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.windLabel = this.scene.add.text(400, 65, 'WIND', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.windText = this.scene.add.text(400, 78, '0', { font: 'bold 16px monospace', fill: textColor }).setOrigin(0.5, 0.5);
         this.windArrow = this.scene.add.graphics();
         this.container.add([this.windLabel, this.windText, this.windArrow]);
 
         this.createDOMButtons();
 
-        this.turnIndicator = this.scene.add.text(400, 95, 'YOUR TURN', { font: 'bold 20px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
+        this.turnIndicator = this.scene.add.text(400, 130, 'YOUR TURN', { font: 'bold 20px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
         this.container.add(this.turnIndicator);
         this.statusText = this.scene.add.text(400, 250, '', { font: 'bold 32px monospace', fill: '#ff00ff' }).setOrigin(0.5, 0.5).setVisible(false);
         this.container.add(this.statusText);
@@ -183,8 +183,8 @@ export class HUD {
             this.buttonStates['fire'] = false;
         }
 
-        this.updateHealthBar(this.p1HealthBar, 20, 28, simulation.tanks[0].health, 12);
-        this.updateHealthBar(this.p2HealthBar, 800 - 220, 28, simulation.tanks[1].health, 12);
+        this.updateHealthBar(this.p1HealthBar, 20, 35, simulation.tanks[0].health, 12);
+        this.updateHealthBar(this.p2HealthBar, 800 - 220, 35, simulation.tanks[1].health, 12);
 
         const seconds = Math.max(0, Math.ceil(rules.turnTimer / 60));
         this.timerText.setText(seconds.toString()).setVisible(isAiming);
@@ -198,9 +198,9 @@ export class HUD {
             const arrowSize = Math.min(10 + Math.abs(rules.wind) * 3, 40);
             this.windArrow.lineStyle(2, arrowColor, 0.8).fillStyle(arrowColor, 0.8);
             const xEnd = isRight ? 400 + arrowSize : 400 - arrowSize;
-            this.windArrow.lineBetween(400, 80, xEnd, 80);
-            if (isRight) this.windArrow.fillTriangle(xEnd, 80, xEnd - 6, 80 - 3, xEnd - 6, 80 + 3);
-            else this.windArrow.fillTriangle(xEnd, 80, xEnd + 6, 80 - 3, xEnd + 6, 80 + 3);
+            this.windArrow.lineBetween(400, 90, xEnd, 90);
+            if (isRight) this.windArrow.fillTriangle(xEnd, 90, xEnd - 6, 90 - 3, xEnd - 6, 90 + 3);
+            else this.windArrow.fillTriangle(xEnd, 90, xEnd + 6, 90 - 3, xEnd + 6, 90 + 3);
         }
 
         // Update stats
@@ -222,14 +222,14 @@ export class HUD {
                 domObj.setVisible(show);
                 if (show) {
                     const isP1 = activePlayerIndex === 0;
-                    // Put adjustment buttons near the active player's side stats
-                    if (id === 'angle-down') domObj.setPosition(isP1 ? 135 : 665, 52);
-                    if (id === 'angle-up') domObj.setPosition(isP1 ? 170 : 630, 52);
-                    if (id === 'power-down') domObj.setPosition(isP1 ? 135 : 665, 77);
-                    if (id === 'power-up') domObj.setPosition(isP1 ? 170 : 630, 77);
+                    // Put adjustment buttons next to the stats
+                    if (id === 'angle-down') domObj.setPosition(isP1 ? 135 : 665, 67);
+                    if (id === 'angle-up') domObj.setPosition(isP1 ? 170 : 630, 67);
+                    if (id === 'power-down') domObj.setPosition(isP1 ? 135 : 665, 102);
+                    if (id === 'power-up') domObj.setPosition(isP1 ? 170 : 630, 102);
                     
-                    // Fire button on the left center of the screen
-                    if (id === 'fire') domObj.setPosition(70, 300);
+                    // Fire button right of the +- buttons
+                    if (id === 'fire') domObj.setPosition(isP1 ? 250 : 540, 85);
                 }
             });
         }

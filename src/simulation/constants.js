@@ -18,9 +18,9 @@ export const GRAVITY_PER_TICK_FP = Math.floor(GRAVITY_FP / (TICK_RATE * TICK_RAT
 // Terrain constants
 export const TERRAIN_STEP = 2;
 export const TERRAIN_SAMPLES = WIDTH / TERRAIN_STEP; // 400
-export const TERRAIN_MIN_HEIGHT = 80;
-export const TERRAIN_MAX_HEIGHT = 450;
-export const TERRAIN_GEN_BASE_RANGE = [150, 300];
+export const TERRAIN_MIN_HEIGHT = 40;
+export const TERRAIN_MAX_HEIGHT = 250;
+export const TERRAIN_GEN_BASE_RANGE = [80, 180];
 export const TERRAIN_GEN_TREND_RANGE = [-2, 2];
 export const TERRAIN_GEN_TREND_LIMIT = 5;
 export const TERRAIN_GEN_SMOOTH_PASSES = 3;
