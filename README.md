@@ -4,6 +4,8 @@
 
 A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspired by classic artillery games, featuring a neon vector aesthetic and perfectly synchronized physics.
 
+<https://tomcoolpxl.github.io/tank-wars/#>
+
 ## Features
 
 - **Deterministic Simulation**: Lockstep synchronization ensures both players see the exact same physics and outcomes.
@@ -91,6 +93,3 @@ npm test
 ```bash
 npm run build
 ```
-
-## License
-MIT
