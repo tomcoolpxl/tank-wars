@@ -9,6 +9,7 @@ A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspi
 - **Fixed-Point Math**: Custom math library to ensure cross-platform determinism.
 - **Neon Aesthetic**: Glowing vector graphics with screen-space effects.
 - **One-Link Handshake**: Share a single link to connect instantly—no manual SDP exchange required.
+- **Session Persistence**: Stay connected after a match ends and start a new game instantly with the same opponent.
 
 ## How to Play
 
@@ -17,6 +18,7 @@ A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspi
 2. Wait for your **Room ID** to be generated.
 3. Click **COPY INVITE LINK** and send it to your opponent.
 4. Keep the tab open; the game starts automatically when they join!
+5. After a match ends, click **PLAY AGAIN** to start a new round with the same player.
 
 ### Joining a Game
 1. Simply click the **Invite Link** sent by the host.

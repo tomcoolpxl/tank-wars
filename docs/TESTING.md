@@ -50,6 +50,7 @@ These tests target the `src/simulation/` directory and run in Node.js.
 These tests orchestrate two browser instances to simulate P2P matches using the PeerJS automated handshake.
 *   `invite_link.spec.js`: Verification of the automated `#join=ID` handshake flow.
 *   `match.spec.js`: Basic match setup, multi-turn synchronization, and gameplay.
+*   `play_again.spec.js`: Verification of the post-game restart flow and seed re-synchronization.
 *   `scenarios.spec.js`: Advanced edge cases:
     *   **Auto-fire:** Verification of deterministic timeout shooting.
     *   **Out-of-bounds:** Ensuring off-map projectiles terminate without explosion.

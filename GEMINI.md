@@ -61,4 +61,5 @@ The simulation and networking layers include granular logging that can be toggle
 2. **Fixed Timestep:** Simulation logic should be stepped at 60Hz.
 3. **Phaser Binding:** Phaser should only read from the simulation state to render visuals. It should not modify simulation state directly.
 4. **Networking Reliability:** The `NetworkManager` uses PeerJS with a sync-and-ACK handshake to ensure both peers have the shared seed before starting the simulation.
-5. **State Hashing:** `Simulation.getStateHash()` excludes `turnTimer` and `tickCount` to allow for minor P2P timing jitter while ensuring core game state (positions, health, terrain) remains perfectly synchronized.
+5. **Session Persistence:** When a match ends, peers can mutually agree to restart via a `PLAY_AGAIN` handshake, which generates a new synchronized seed without needing to reconnect.
+6. **State Hashing:** `Simulation.getStateHash()` excludes `turnTimer` and `tickCount` to allow for minor P2P timing jitter while ensuring core game state (positions, health, terrain) remains perfectly synchronized.

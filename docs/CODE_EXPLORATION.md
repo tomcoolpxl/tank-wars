@@ -67,6 +67,10 @@ Uses **PeerJS** for automated WebRTC P2P communication.
 - **Sync ACK:** The Joiner acknowledges the seed. Only after this handshake is complete does the match transition to the GameScene.
 - **SHOT Messages:** Transmit angle and power. Validated for range and turn ownership.
 - **State Hashes:** After every turn, clients exchange a hash of the simulation state to verify determinism.
+- **Play Again Handshake:**
+    - Either player clicks "Play Again" sending `PLAY_AGAIN_READY`.
+    - Once both are ready, the Host generates a new seed and sends `PLAY_AGAIN_START`.
+    - Both scenes restart simultaneously with the new seed, preserving the P2P connection.
 
 ## 4. Debugging and Logging
 
