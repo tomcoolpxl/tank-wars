@@ -1,9 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Tank } from '../../src/simulation/tank.js';
 import { Terrain } from '../../src/simulation/terrain.js';
 import { FP } from '../../src/simulation/constants.js';
 
 describe('Tank Physics', () => {
+    beforeEach(() => {
+        vi.stubGlobal('window', { DEBUG_TANK: true });
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     it('should fall under gravity when in air', () => {
         const terrain = new Terrain(); // All heights 0
         const tank = new Tank(0, 100 * FP, 200 * FP);
@@ -13,6 +18,20 @@ describe('Tank Physics', () => {
         
         expect(tank.vy_fp).toBeLessThan(initialVy);
         expect(tank.y_fp).toBeLessThan(200 * FP);
+    });
+
+    it('should log debug info if enabled', () => {
+        const tank = new Tank(0, 100 * FP, 200 * FP);
+        tank.log('test message');
+        expect(console.log).toHaveBeenCalledWith('[TANK 0]', 'test message');
+    });
+
+    it('should die if bottom Y < 0', () => {
+        const terrain = new Terrain();
+        const tank = new Tank(0, 100 * FP, -1 * FP);
+        tank.step(terrain);
+        expect(tank.alive).toBe(false);
+        expect(tank.health).toBe(0);
     });
 
     it('should stop and snap to ground when hitting terrain', () => {

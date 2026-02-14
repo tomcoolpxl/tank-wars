@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 import { GameState } from '../simulation/rules.js';
+import { HUD_CONFIG } from '../render/constants.js';
 
 export class HUD {
     constructor(scene) {
         this.scene = scene;
         this.container = scene.add.container(0, 0);
         this.container.setScrollFactor(0);
-        this.container.setDepth(100);
+        this.container.setDepth(HUD_CONFIG.DEPTH);
 
         this.buttonStates = {
             'angle-down': false,
@@ -20,58 +21,58 @@ export class HUD {
     }
 
     createHUD() {
-        const textColor = '#00ffff';
+        const textColor = HUD_CONFIG.TEXT_COLOR;
         const fontStyle = { font: 'bold 18px monospace', fill: textColor };
         const labelStyle = { font: '14px monospace', fill: textColor };
         const statStyle = { font: 'bold 16px monospace', fill: textColor };
 
         // Player 1 Area
-        this.p1Label = this.scene.add.text(20, 20, 'PLAYER 1', labelStyle);
-        this.p1HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(20, 40, 200, 12);
+        this.p1Label = this.scene.add.text(HUD_CONFIG.P1_X, HUD_CONFIG.Y_START, 'PLAYER 1', labelStyle);
+        this.p1HealthBG = this.scene.add.graphics().fillStyle(HUD_CONFIG.HEALTH_BG_COLOR).fillRect(HUD_CONFIG.P1_X, HUD_CONFIG.Y_START + 20, HUD_CONFIG.BAR_WIDTH, HUD_CONFIG.BAR_HEIGHT);
         this.p1HealthBar = this.scene.add.graphics();
-        this.p1AngleText = this.scene.add.text(20, 75, 'ANG: 45°', statStyle);
-        this.p1PowerText = this.scene.add.text(20, 110, 'PWR: 50', statStyle);
+        this.p1AngleText = this.scene.add.text(HUD_CONFIG.P1_X, HUD_CONFIG.Y_START + 55, 'ANG: 45°', statStyle);
+        this.p1PowerText = this.scene.add.text(HUD_CONFIG.P1_X, HUD_CONFIG.Y_START + 90, 'PWR: 50', statStyle);
         this.container.add([this.p1Label, this.p1HealthBG, this.p1HealthBar, this.p1AngleText, this.p1PowerText]);
 
         // Player 2 Area
-        this.p2Label = this.scene.add.text(800 - 20, 20, 'PLAYER 2', labelStyle).setOrigin(1, 0);
-        this.p2HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(800 - 220, 40, 200, 12);
+        this.p2Label = this.scene.add.text(HUD_CONFIG.P2_X, HUD_CONFIG.Y_START, 'PLAYER 2', labelStyle).setOrigin(1, 0);
+        this.p2HealthBG = this.scene.add.graphics().fillStyle(HUD_CONFIG.HEALTH_BG_COLOR).fillRect(HUD_CONFIG.P2_X - HUD_CONFIG.BAR_WIDTH, HUD_CONFIG.Y_START + 20, HUD_CONFIG.BAR_WIDTH, HUD_CONFIG.BAR_HEIGHT);
         this.p2HealthBar = this.scene.add.graphics();
-        this.p2AngleText = this.scene.add.text(800 - 20, 75, 'ANG: 45°', statStyle).setOrigin(1, 0);
-        this.p2PowerText = this.scene.add.text(800 - 20, 110, 'PWR: 50', statStyle).setOrigin(1, 0);
+        this.p2AngleText = this.scene.add.text(HUD_CONFIG.P2_X, HUD_CONFIG.Y_START + 55, 'ANG: 45°', statStyle).setOrigin(1, 0);
+        this.p2PowerText = this.scene.add.text(HUD_CONFIG.P2_X, HUD_CONFIG.Y_START + 90, 'PWR: 50', statStyle).setOrigin(1, 0);
         this.container.add([this.p2Label, this.p2HealthBG, this.p2HealthBar, this.p2AngleText, this.p2PowerText]);
 
         // Center Area (Timer & Wind)
-        this.timerText = this.scene.add.text(400, 25, '20', { font: 'bold 24px monospace', fill: textColor }).setOrigin(0.5, 0.5);
-        this.timerLabel = this.scene.add.text(400, 45, 'SEC', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.timerText = this.scene.add.text(HUD_CONFIG.CENTER_X, 25, '20', { font: 'bold 24px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.timerLabel = this.scene.add.text(HUD_CONFIG.CENTER_X, 45, 'SEC', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
         this.container.add([this.timerText, this.timerLabel]);
 
-        this.windLabel = this.scene.add.text(400, 65, 'WIND', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
-        this.windText = this.scene.add.text(400, 78, '0', { font: 'bold 16px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.windLabel = this.scene.add.text(HUD_CONFIG.CENTER_X, 65, 'WIND', { font: '10px monospace', fill: textColor }).setOrigin(0.5, 0.5);
+        this.windText = this.scene.add.text(HUD_CONFIG.CENTER_X, 78, '0', { font: 'bold 16px monospace', fill: textColor }).setOrigin(0.5, 0.5);
         this.windArrow = this.scene.add.graphics();
         this.container.add([this.windLabel, this.windText, this.windArrow]);
 
         this.createDOMButtons();
 
-        this.turnIndicator = this.scene.add.text(400, 145, 'YOUR TURN', { font: 'bold 20px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
+        this.turnIndicator = this.scene.add.text(HUD_CONFIG.CENTER_X, 145, 'YOUR TURN', { font: 'bold 20px monospace', fill: HUD_CONFIG.ACTIVE_COLOR }).setOrigin(0.5, 0.5);
         this.container.add(this.turnIndicator);
-        this.statusText = this.scene.add.text(400, 250, '', { font: 'bold 32px monospace', fill: '#ff00ff' }).setOrigin(0.5, 0.5).setVisible(false);
+        this.statusText = this.scene.add.text(HUD_CONFIG.CENTER_X, 250, '', { font: 'bold 32px monospace', fill: HUD_CONFIG.STATUS_COLOR }).setOrigin(0.5, 0.5).setVisible(false);
         this.container.add(this.statusText);
 
         this.gameOverOverlay = this.scene.add.container(0, 0).setVisible(false);
-        const bg = this.scene.add.rectangle(400, 300, 800, 600, 0x000000, 0.7);
+        const bg = this.scene.add.rectangle(HUD_CONFIG.CENTER_X, HUD_CONFIG.CENTER_Y, 800, 600, HUD_CONFIG.OVERLAY_COLOR, HUD_CONFIG.OVERLAY_ALPHA);
         
         const winText = document.createElement('div');
         winText.id = 'game-over-title';
-        winText.style.cssText = 'color: #00ffff; font-family: monospace; font-weight: bold; font-size: 48px; text-align: center; width: 800px;';
+        winText.style.cssText = `color: ${HUD_CONFIG.TEXT_COLOR}; font-family: monospace; font-weight: bold; font-size: 48px; text-align: center; width: 800px;`;
         this.winTextDOM = winText;
-        this.winText = this.scene.add.dom(400, 250, winText).setOrigin(0.5, 0.5);
+        this.winText = this.scene.add.dom(HUD_CONFIG.CENTER_X, 250, winText).setOrigin(0.5, 0.5);
 
         const subText = document.createElement('div');
         subText.id = 'game-over-subtext';
         subText.style.cssText = 'color: #ffffff; font-family: monospace; font-size: 18px; text-align: center; width: 800px; margin-top: 10px;';
         subText.innerText = 'GAME OVER';
-        this.gameOverSubtext = this.scene.add.dom(400, 320, subText).setOrigin(0.5, 0.5);
+        this.gameOverSubtext = this.scene.add.dom(HUD_CONFIG.CENTER_X, 320, subText).setOrigin(0.5, 0.5);
         
         const playAgainBtn = document.createElement('button');
         playAgainBtn.innerText = 'PLAY AGAIN';
@@ -79,8 +80,8 @@ export class HUD {
         playAgainBtn.style.cssText = `
             padding: 10px 20px;
             background: #333;
-            color: #ffff00;
-            border: 2px solid #ffff00;
+            color: ${HUD_CONFIG.ACTIVE_COLOR};
+            border: 2px solid ${HUD_CONFIG.ACTIVE_COLOR};
             font-family: monospace;
             font-weight: bold;
             font-size: 24px;
@@ -91,12 +92,12 @@ export class HUD {
             this.playAgainBtn.setVisible(false);
             this.scene.events.emit('play-again');
         };
-        this.playAgainBtn = this.scene.add.dom(400, 380, playAgainBtn).setOrigin(0.5, 0.5);
+        this.playAgainBtn = this.scene.add.dom(HUD_CONFIG.CENTER_X, 380, playAgainBtn).setOrigin(0.5, 0.5);
 
         const statusText = document.createElement('div');
         statusText.id = 'play-again-status';
         statusText.style.cssText = 'color: #00ff00; font-family: monospace; font-size: 16px; text-align: center; width: 800px; margin-top: 10px;';
-        this.playAgainStatus = this.scene.add.dom(400, 420, statusText).setOrigin(0.5, 0.5);
+        this.playAgainStatus = this.scene.add.dom(HUD_CONFIG.CENTER_X, 420, statusText).setOrigin(0.5, 0.5);
 
         this.gameOverOverlay.add([bg, this.winText, this.gameOverSubtext, this.playAgainBtn, this.playAgainStatus]);
         this.container.add(this.gameOverOverlay);
@@ -122,8 +123,8 @@ export class HUD {
                 width: 32px;
                 height: 32px;
                 background: #111;
-                color: #00ffff;
-                border: 1px solid #00ffff;
+                color: ${HUD_CONFIG.TEXT_COLOR};
+                border: 1px solid ${HUD_CONFIG.TEXT_COLOR};
                 font-family: monospace;
                 font-weight: bold;
                 font-size: 18px;
@@ -138,9 +139,9 @@ export class HUD {
             if (cfg.id === 'fire') {
                 btn.style.width = '100px';
                 btn.style.height = '35px';
-                btn.style.background = '#400';
-                btn.style.color = '#ff4444';
-                btn.style.border = '2px solid #ff4444';
+                btn.style.background = HUD_CONFIG.FIRE_BTN_BG;
+                btn.style.color = HUD_CONFIG.FIRE_BTN_COLOR;
+                btn.style.border = `2px solid ${HUD_CONFIG.FIRE_BTN_COLOR}`;
                 btn.style.fontSize = '20px';
             }
 
@@ -183,8 +184,8 @@ export class HUD {
             this.buttonStates['fire'] = false;
         }
 
-        this.updateHealthBar(this.p1HealthBar, 20, 40, simulation.tanks[0].health, 12);
-        this.updateHealthBar(this.p2HealthBar, 800 - 220, 40, simulation.tanks[1].health, 12);
+        this.updateHealthBar(this.p1HealthBar, HUD_CONFIG.P1_X, HUD_CONFIG.Y_START + 20, simulation.tanks[0].health, HUD_CONFIG.BAR_HEIGHT);
+        this.updateHealthBar(this.p2HealthBar, HUD_CONFIG.P2_X - HUD_CONFIG.BAR_WIDTH, HUD_CONFIG.Y_START + 20, simulation.tanks[1].health, HUD_CONFIG.BAR_HEIGHT);
 
         const seconds = Math.max(0, Math.ceil(rules.turnTimer / 60));
         this.timerText.setText(seconds.toString()).setVisible(isAiming);
@@ -194,11 +195,11 @@ export class HUD {
         this.windArrow.clear();
         if (rules.wind !== 0) {
             const isRight = rules.wind > 0;
-            const arrowColor = 0x00ffff;
+            const arrowColor = HUD_CONFIG.TEXT_COLOR_NUMBER;
             const arrowSize = Math.min(10 + Math.abs(rules.wind) * 3, 40);
             this.windArrow.lineStyle(2, arrowColor, 0.8).fillStyle(arrowColor, 0.8);
-            const xEnd = isRight ? 400 + arrowSize : 400 - arrowSize;
-            this.windArrow.lineBetween(400, 90, xEnd, 90);
+            const xEnd = isRight ? HUD_CONFIG.CENTER_X + arrowSize : HUD_CONFIG.CENTER_X - arrowSize;
+            this.windArrow.lineBetween(HUD_CONFIG.CENTER_X, 90, xEnd, 90);
             if (isRight) this.windArrow.fillTriangle(xEnd, 90, xEnd - 6, 90 - 3, xEnd - 6, 90 + 3);
             else this.windArrow.fillTriangle(xEnd, 90, xEnd + 6, 90 - 3, xEnd + 6, 90 + 3);
         }
@@ -210,7 +211,7 @@ export class HUD {
             angleTxt.setText(`ANG: ${tank.aimAngle}°`);
             powerTxt.setText(`PWR: ${tank.aimPower}`);
             
-            const color = (idx === activePlayerIndex && isAiming) ? '#ffff00' : '#00ffff';
+            const color = (idx === activePlayerIndex && isAiming) ? HUD_CONFIG.ACTIVE_COLOR : HUD_CONFIG.TEXT_COLOR;
             angleTxt.setFill(color);
             powerTxt.setFill(color);
         });
@@ -222,22 +223,18 @@ export class HUD {
                 domObj.setVisible(show);
                 if (show) {
                     const isP1 = activePlayerIndex === 0;
-                    // Mirroring: P1 from left (20), P2 from right (780)
-                    // P1: Text(20) -> Buttons(135/170) -> Fire(250)
-                    // P2: Text(780) -> Buttons(665/630) -> Fire(550)
                     if (id === 'angle-down') domObj.setPosition(isP1 ? 135 : 665, 82);
                     if (id === 'angle-up') domObj.setPosition(isP1 ? 170 : 630, 82);
                     if (id === 'power-down') domObj.setPosition(isP1 ? 135 : 665, 117);
                     if (id === 'power-up') domObj.setPosition(isP1 ? 170 : 630, 117);
                     
-                    // Fire button perfectly mirrored and right of adjustment controls (from player perspective)
                     if (id === 'fire') domObj.setPosition(isP1 ? 250 : 550, 100);
                 }
             });
         }
 
         if (isAiming) {
-            this.turnIndicator.setVisible(true).setText(isLocalTurn ? 'YOUR TURN' : "OPPONENT'S TURN").setFill(isLocalTurn ? '#ffff00' : '#888888');
+            this.turnIndicator.setVisible(true).setText(isLocalTurn ? 'YOUR TURN' : "OPPONENT'S TURN").setFill(isLocalTurn ? HUD_CONFIG.ACTIVE_COLOR : HUD_CONFIG.DEAD_COLOR);
         } else {
             this.turnIndicator.setVisible(false);
         }
@@ -257,8 +254,8 @@ export class HUD {
     updateHealthBar(graphics, x, y, health, height = 15) {
         graphics.clear();
         if (health <= 0) return;
-        let color = health < 30 ? 0xff0000 : (health < 60 ? 0xffff00 : 0x00ff00);
-        graphics.fillStyle(color).fillRect(x, y, (health / 100) * 200, height);
+        let color = health < 30 ? HUD_CONFIG.HEALTH_LOW_COLOR : (health < 60 ? HUD_CONFIG.HEALTH_MID_COLOR : HUD_CONFIG.HEALTH_HIGH_COLOR);
+        graphics.fillStyle(color).fillRect(x, y, (health / 100) * HUD_CONFIG.BAR_WIDTH, height);
     }
 
     showStatus(text, duration = 2000) {

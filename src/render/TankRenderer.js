@@ -1,4 +1,5 @@
 import { FP, TANK_WIDTH, TANK_HEIGHT, VIEWPORT_HEIGHT } from '../simulation/constants.js';
+import { RENDER_DEPTHS, COLORS, TANK_VISUALS } from './constants.js';
 
 export class TankRenderer {
     constructor(scene) {
@@ -19,7 +20,7 @@ export class TankRenderer {
                 const healthBar = this.scene.add.graphics();
                 
                 container.add([glowOuter, glowMid, glowInner, main, healthBar]);
-                container.setDepth(10);
+                container.setDepth(RENDER_DEPTHS.TANK);
                 this.tankContainers.set(tank.id, container);
                 
                 container.glowOuter = glowOuter;
@@ -37,8 +38,8 @@ export class TankRenderer {
             glowOuter.clear();
             healthBar.clear();
 
-            const color = tank.id === 0 ? 0x00ffff : 0xff00ff;
-            const drawColor = tank.alive ? color : 0x555555;
+            const color = tank.id === 0 ? COLORS.PLAYER_1 : COLORS.PLAYER_2;
+            const drawColor = tank.alive ? color : COLORS.DEAD;
             
             // Draw half-circle platform (base)
             main.lineStyle(2, drawColor, 1.0);
@@ -51,25 +52,25 @@ export class TankRenderer {
 
             if (tank.alive) {
                 // Glow for base
-                glowInner.lineStyle(6, drawColor, 0.3);
+                glowInner.lineStyle(TANK_VISUALS.GLOW_INNER_WIDTH, drawColor, TANK_VISUALS.GLOW_INNER_ALPHA);
                 glowInner.arc(0, 0, TANK_WIDTH / 2, Math.PI, 0, false);
                 glowInner.strokePath();
 
-                glowMid.lineStyle(12, drawColor, 0.15);
+                glowMid.lineStyle(TANK_VISUALS.GLOW_MID_WIDTH, drawColor, TANK_VISUALS.GLOW_MID_ALPHA);
                 glowMid.arc(0, 0, TANK_WIDTH / 2, Math.PI, 0, false);
                 glowMid.strokePath();
                 
-                glowOuter.lineStyle(24, drawColor, 0.05);
+                glowOuter.lineStyle(TANK_VISUALS.GLOW_OUTER_WIDTH, drawColor, TANK_VISUALS.GLOW_OUTER_ALPHA);
                 glowOuter.arc(0, 0, TANK_WIDTH / 2, Math.PI, 0, false);
                 glowOuter.strokePath();
 
                 // Draw gun barrel
                 const angleRad = -tank.aimAngle * Math.PI / 180;
-                main.lineStyle(4, drawColor, 1.0);
-                main.lineBetween(0, 0, Math.cos(angleRad) * 20, Math.sin(angleRad) * 20);
+                main.lineStyle(TANK_VISUALS.BARREL_WIDTH, drawColor, 1.0);
+                main.lineBetween(0, 0, Math.cos(angleRad) * TANK_VISUALS.BARREL_LENGTH, Math.sin(angleRad) * TANK_VISUALS.BARREL_LENGTH);
                 
-                glowInner.lineStyle(8, drawColor, 0.3);
-                glowInner.lineBetween(0, 0, Math.cos(angleRad) * 20, Math.sin(angleRad) * 20);
+                glowInner.lineStyle(TANK_VISUALS.GLOW_BARREL_WIDTH, drawColor, TANK_VISUALS.GLOW_INNER_ALPHA);
+                glowInner.lineBetween(0, 0, Math.cos(angleRad) * TANK_VISUALS.BARREL_LENGTH, Math.sin(angleRad) * TANK_VISUALS.BARREL_LENGTH);
             }
             
             // Position
@@ -85,12 +86,12 @@ export class TankRenderer {
     }
 
     update(time) {
-        const pulse = 0.95 + Math.sin(time / 400) * 0.05;
+        const pulse = TANK_VISUALS.PULSE_BASE + Math.sin(time / TANK_VISUALS.PULSE_SPEED_DIVISOR) * TANK_VISUALS.PULSE_AMPLITUDE;
         this.tankContainers.forEach(container => {
             container.main.alpha = pulse;
-            container.glowInner.alpha = pulse * 0.6;
-            if (container.glowMid) container.glowMid.alpha = pulse * 0.3;
-            container.glowOuter.alpha = pulse * 0.15;
+            container.glowInner.alpha = pulse * TANK_VISUALS.PULSE_INNER_ALPHA_MULT;
+            if (container.glowMid) container.glowMid.alpha = pulse * TANK_VISUALS.PULSE_MID_ALPHA_MULT;
+            container.glowOuter.alpha = pulse * TANK_VISUALS.PULSE_OUTER_ALPHA_MULT;
         });
     }
 }

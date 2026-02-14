@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { NetworkManager } from '../net/webrtc.js';
+import { LOBBY_VISUALS } from '../render/constants.js';
 
 export class LobbyScene extends Phaser.Scene {
     constructor() {
@@ -15,7 +16,7 @@ export class LobbyScene extends Phaser.Scene {
 
         this.add.text(width / 2, 50, 'TANK WARS', {
             fontSize: '48px',
-            fill: '#0f0',
+            fill: LOBBY_VISUALS.TITLE_COLOR,
             fontFamily: 'monospace'
         }).setOrigin(0.5);
 
@@ -121,7 +122,7 @@ export class LobbyScene extends Phaser.Scene {
                 };
             } catch (err) {
                 statusText.innerText = 'Status: Registration Error';
-                statusText.style.color = '#f00';
+                statusText.style.color = LOBBY_VISUALS.ERROR_COLOR;
             }
         });
 
@@ -139,7 +140,7 @@ export class LobbyScene extends Phaser.Scene {
 
         this.networkManager.onConnectionStateChange((state) => {
             if (state === 'connected') {
-                statusText.style.color = '#0f0';
+                statusText.style.color = LOBBY_VISUALS.SUCCESS_COLOR;
                 statusText.innerText = 'Status: CONNECTED! Syncing...';
                 if (this.networkManager.isHost) {
                     const seed = Math.floor(Math.random() * 0xFFFFFFFF);
@@ -151,7 +152,7 @@ export class LobbyScene extends Phaser.Scene {
                     }, 500);
                 }
             } else if (state === 'closed' || state === 'failed') {
-                statusText.style.color = '#f00';
+                statusText.style.color = LOBBY_VISUALS.ERROR_COLOR;
                 statusText.innerText = `Status: ${state.toUpperCase()}`;
             }
         });

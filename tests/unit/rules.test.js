@@ -1,11 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Rules, GameState } from '../../src/simulation/rules.js';
 import { RNG } from '../../src/simulation/rng.js';
 
 describe('Rules State Machine', () => {
+    beforeEach(() => {
+        vi.stubGlobal('window', { DEBUG_RULES: true });
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     it('should initialize to LOBBY', () => {
         const rules = new Rules();
         expect(rules.state).toBe(GameState.LOBBY);
+    });
+
+    it('should log debug info if enabled', () => {
+        const rules = new Rules();
+        rules.log('test message');
+        expect(console.log).toHaveBeenCalledWith('[RULES]', 'test message');
     });
 
     it('should start match correctly', () => {

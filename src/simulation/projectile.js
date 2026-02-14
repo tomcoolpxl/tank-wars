@@ -22,16 +22,6 @@ export class Projectile {
         this.vx_fp = Math.floor((v0_fp * getCos(angleDeg)) / FP / 60);
         this.vy_fp = Math.floor((v0_fp * getSin(angleDeg)) / FP / 60);
 
-        // Ensure velocity > 0 if power > 0
-        if (power > 0) {
-            if (Math.abs(this.vx_fp) < 1 && getCos(angleDeg) !== 0) {
-                this.vx_fp = getCos(angleDeg) > 0 ? 1 : -1;
-            }
-            if (Math.abs(this.vy_fp) < 1 && getSin(angleDeg) !== 0) {
-                this.vy_fp = getSin(angleDeg) > 0 ? 1 : -1;
-            }
-        }
-        
         this.ticksAlive = 0;
         this.active = true;
         

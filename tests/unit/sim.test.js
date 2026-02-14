@@ -1,13 +1,24 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Simulation } from '../../src/simulation/sim.js';
 import { GameState } from '../../src/simulation/rules.js';
 import { FP } from '../../src/simulation/constants.js';
 
 describe('Simulation Lifecycle', () => {
+    beforeEach(() => {
+        vi.stubGlobal('window', { DEBUG_SIM: true });
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     it('should initialize with correct seed', () => {
         const sim = new Simulation(123);
         expect(sim.seed).toBe(123);
         expect(sim.tanks.length).toBe(2);
+    });
+
+    it('should log debug info if enabled', () => {
+        const sim = new Simulation(123);
+        sim.log('test message');
+        expect(console.log).toHaveBeenCalledWith('[SIM]', 'test message');
     });
 
     it('should transition to PROJECTILE_FLIGHT on fire', () => {
@@ -101,6 +112,7 @@ describe('Simulation Lifecycle', () => {
         
         expect(sim.rules.state).toBe(GameState.GAME_OVER);
         expect(sim.rules.winner).toBe(-1);
+        expect(sim.getStateHash()).not.toBe(0);
     });
 
     it('should detect single winner', () => {
@@ -111,6 +123,7 @@ describe('Simulation Lifecycle', () => {
         
         expect(sim.rules.state).toBe(GameState.GAME_OVER);
         expect(sim.rules.winner).toBe(0);
+        expect(sim.getStateHash()).not.toBe(0);
     });
 
     it('should stabilize on timer even if not stable', () => {

@@ -1,4 +1,5 @@
 import { VIEWPORT_HEIGHT } from '../simulation/constants.js';
+import { RENDER_DEPTHS, COLORS, EXPLOSION_VISUALS } from './constants.js';
 
 export class ExplosionRenderer {
     constructor(scene) {
@@ -10,7 +11,7 @@ export class ExplosionRenderer {
         // Visual-only effect: multiple expanding rings for neon look
         const createRing = (radius, color, alpha, duration, scale) => {
             const circle = this.scene.add.circle(x, y, radius, color, alpha);
-            circle.setDepth(30);
+            circle.setDepth(RENDER_DEPTHS.EXPLOSION);
             circle.setStrokeStyle(2, color, alpha);
             circle.setFillStyle(color, alpha * 0.2);
             
@@ -27,42 +28,42 @@ export class ExplosionRenderer {
         };
 
         // Outer glow ring
-        createRing(5, 0xffaa00, 0.2, 400, 15);
+        createRing(EXPLOSION_VISUALS.RING_START_RADIUS, COLORS.EXPLOSION_OUTER, EXPLOSION_VISUALS.OUTER_ALPHA, EXPLOSION_VISUALS.OUTER_DURATION, EXPLOSION_VISUALS.OUTER_SCALE);
         // Middle ring
-        createRing(5, 0xff5500, 0.5, 300, 12);
+        createRing(EXPLOSION_VISUALS.RING_START_RADIUS, COLORS.EXPLOSION_MID, EXPLOSION_VISUALS.MID_ALPHA, EXPLOSION_VISUALS.MID_DURATION, EXPLOSION_VISUALS.MID_SCALE);
         // Inner core ring
-        createRing(5, 0xffffff, 0.8, 200, 8);
+        createRing(EXPLOSION_VISUALS.RING_START_RADIUS, COLORS.EXPLOSION_INNER, EXPLOSION_VISUALS.INNER_ALPHA, EXPLOSION_VISUALS.INNER_DURATION, EXPLOSION_VISUALS.INNER_SCALE);
         
         // Neon Particles
-        const colors = [0xffaa00, 0xff5500, 0xffffff];
+        const colors = [COLORS.EXPLOSION_OUTER, COLORS.EXPLOSION_MID, COLORS.EXPLOSION_INNER];
         colors.forEach(color => {
             const particles = this.scene.add.particles(x, y, 'particle', {
-                speed: { min: 100, max: 300 },
+                speed: { min: EXPLOSION_VISUALS.PARTICLE_MIN_SPEED, max: EXPLOSION_VISUALS.PARTICLE_MAX_SPEED },
                 angle: { min: 0, max: 360 },
                 scale: { start: 1.0, end: 0 },
                 alpha: { start: 1, end: 0 },
                 blendMode: 'ADD',
-                lifespan: { min: 400, max: 800 },
+                lifespan: { min: EXPLOSION_VISUALS.PARTICLE_MIN_LIFESPAN, max: EXPLOSION_VISUALS.PARTICLE_MAX_LIFESPAN },
                 gravityY: 0,
                 tint: color,
                 emitting: false
             });
             
-            particles.explode(20);
+            particles.explode(EXPLOSION_VISUALS.PARTICLE_COUNT);
             
-            this.scene.time.delayedCall(1000, () => {
+            this.scene.time.delayedCall(EXPLOSION_VISUALS.PARTICLE_DESTROY_DELAY, () => {
                 particles.destroy();
             });
         });
 
         // Flash effect
-        const flash = this.scene.add.circle(x, y, 10, 0xffffff, 0.8);
-        flash.setDepth(40);
+        const flash = this.scene.add.circle(x, y, EXPLOSION_VISUALS.FLASH_RADIUS, COLORS.EXPLOSION_INNER, EXPLOSION_VISUALS.FLASH_ALPHA);
+        flash.setDepth(RENDER_DEPTHS.FLASH);
         this.scene.tweens.add({
             targets: flash,
-            scale: 20,
+            scale: EXPLOSION_VISUALS.FLASH_SCALE,
             alpha: 0,
-            duration: 100,
+            duration: EXPLOSION_VISUALS.FLASH_DURATION,
             onComplete: () => flash.destroy()
         });
     }

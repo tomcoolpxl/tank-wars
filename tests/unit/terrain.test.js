@@ -1,8 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Terrain } from '../../src/simulation/terrain.js';
 import { TERRAIN_MIN_HEIGHT, TERRAIN_MAX_HEIGHT, WIDTH } from '../../src/simulation/constants.js';
 
 describe('Terrain', () => {
+    beforeEach(() => {
+        vi.stubGlobal('window', { DEBUG_TERRAIN: true });
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     it('should generate deterministic terrain', () => {
         const t1 = new Terrain();
         const t2 = new Terrain();
@@ -10,6 +15,12 @@ describe('Terrain', () => {
         t2.generate(12345);
 
         expect(t1.heights).toEqual(t2.heights);
+    });
+
+    it('should log debug info if enabled', () => {
+        const t = new Terrain();
+        t.log('test message');
+        expect(console.log).toHaveBeenCalledWith('[TERRAIN]', 'test message');
     });
 
     it('should stay within height bounds', () => {

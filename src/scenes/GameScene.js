@@ -6,6 +6,7 @@ import { TerrainRenderer } from '../render/TerrainRenderer.js';
 import { TankRenderer } from '../render/TankRenderer.js';
 import { ProjectileRenderer } from '../render/ProjectileRenderer.js';
 import { ExplosionRenderer } from '../render/ExplosionRenderer.js';
+import { COLORS } from '../render/constants.js';
 import { HUD } from '../ui/HUD.js';
 
 export class GameScene extends Phaser.Scene {
@@ -17,7 +18,7 @@ export class GameScene extends Phaser.Scene {
     preload() {
         if (!this.textures.exists('particle')) {
             const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-            graphics.fillStyle(0xffffff);
+            graphics.fillStyle(COLORS.PROJECTILE);
             graphics.fillCircle(4, 4, 4);
             graphics.generateTexture('particle', 8, 8);
         }

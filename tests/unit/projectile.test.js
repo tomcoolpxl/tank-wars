@@ -1,15 +1,37 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Projectile } from '../../src/simulation/projectile.js';
 import { Terrain } from '../../src/simulation/terrain.js';
 import { Tank } from '../../src/simulation/tank.js';
 import { FP, PROJECTILE_LIFETIME_TICKS } from '../../src/simulation/constants.js';
 
 describe('Projectile Physics', () => {
+    beforeEach(() => {
+        vi.stubGlobal('window', { DEBUG_PROJ: true });
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
     it('should follow gravity', () => {
         const p = new Projectile(100 * FP, 300 * FP, 0, 50, 0);
         const initialVy = p.vy_fp;
         p.step(new Terrain(), []);
         expect(p.vy_fp).toBeLessThan(initialVy);
+    });
+
+    it('should handle low velocity edge cases', () => {
+        // Angles where sin/cos are small but non-zero
+        // 89 degrees: cos is small positive
+        const p1 = new Projectile(100 * FP, 100 * FP, 89, 1, 0);
+        expect(Math.abs(p1.vx_fp)).toBeGreaterThanOrEqual(1);
+
+        // 1 degree: sin is small positive
+        const p2 = new Projectile(100 * FP, 100 * FP, 1, 1, 0);
+        expect(Math.abs(p2.vy_fp)).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should log debug info if enabled', () => {
+        const p = new Projectile(100 * FP, 100 * FP, 0, 50, 0);
+        p.log('test message');
+        expect(console.log).toHaveBeenCalledWith('[PROJ]', 'test message');
     });
 
     it('should collide with terrain', () => {
