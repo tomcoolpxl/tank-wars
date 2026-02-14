@@ -52,6 +52,7 @@ export const PROJECTILE_SELF_COLLISION_TICKS = 20;
 export const PROJECTILE_SPAWN_OFFSET = 20;
 
 // Explosion constants
+export const PRE_EXPLOSION_TICKS = 30;
 export const EXPLOSION_DAMAGE_RADIUS = 60;
 export const EXPLOSION_DEFORM_RADIUS = 45;
 

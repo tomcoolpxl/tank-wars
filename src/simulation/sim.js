@@ -7,7 +7,8 @@ import { applyExplosion } from './explosion.js';
 import { getSin, getCos } from './trigLUT.js';
 import { 
     FP, STABILIZATION_CAP_TICKS, TANK_SPAWN_LEFT_RANGE, TANK_SPAWN_RIGHT_RANGE,
-    TANK_SPAWN_Y_OFFSET, PROJECTILE_MAX_POWER, PROJECTILE_SPAWN_OFFSET
+    TANK_SPAWN_Y_OFFSET, PROJECTILE_MAX_POWER, PROJECTILE_SPAWN_OFFSET,
+    PRE_EXPLOSION_TICKS
 } from './constants.js';
 
 export class Simulation {
@@ -92,7 +93,7 @@ export class Simulation {
                     if (result) {
                         if (result.type === 'explosion') {
                             this.rules.state = GameState.PRE_EXPLOSION;
-                            this.rules.preExplosionTimer = 60;
+                            this.rules.preExplosionTimer = PRE_EXPLOSION_TICKS;
                             this.rules.explosionX = result.x;
                             this.rules.explosionY = result.y;
                             this.events.push({ type: 'explosion_start', x: result.x, y: result.y });
