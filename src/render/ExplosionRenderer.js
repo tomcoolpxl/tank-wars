@@ -37,18 +37,20 @@ export class ExplosionRenderer {
         const colors = [0xffaa00, 0xff5500, 0xffffff];
         colors.forEach(color => {
             const particles = this.scene.add.particles(x, y, 'particle', {
-                speed: { min: 80, max: 200 },
+                speed: { min: 100, max: 300 },
                 angle: { min: 0, max: 360 },
-                scale: { start: 0.8, end: 0 },
+                scale: { start: 1.0, end: 0 },
                 alpha: { start: 1, end: 0 },
                 blendMode: 'ADD',
-                lifespan: 800,
-                gravityY: 400,
-                quantity: 10,
-                tint: color
+                lifespan: { min: 400, max: 800 },
+                gravityY: 0,
+                tint: color,
+                emitting: false
             });
             
-            this.scene.time.delayedCall(800, () => {
+            particles.explode(20);
+            
+            this.scene.time.delayedCall(1000, () => {
                 particles.destroy();
             });
         });
