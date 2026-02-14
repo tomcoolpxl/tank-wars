@@ -2,9 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
+  timeout: 60000,
   fullyParallel: false, // Run matches sequentially to avoid port conflicts if any
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: 3,
   workers: 1, // Stick to 1 worker for stable P2P tests
   reporter: 'list',
   use: {

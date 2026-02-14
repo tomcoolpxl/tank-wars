@@ -114,8 +114,10 @@ export const EXPLOSION_VISUALS = {
 
 export const HUD_CONFIG = {
     DEPTH: 100,
-    TEXT_COLOR: '#00ffff',
-    TEXT_COLOR_NUMBER: 0x00ffff,
+    PLAYER_1_HEX: '#00ffff',
+    PLAYER_2_HEX: '#ff00ff',
+    TEXT_COLOR: '#ffffff',
+    TEXT_COLOR_NUMBER: 0xffffff,
     ACTIVE_COLOR: '#ffff00',
     ACTIVE_COLOR_NUMBER: 0xffff00,
     DEAD_COLOR: '#888888',

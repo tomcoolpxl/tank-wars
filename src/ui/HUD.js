@@ -23,11 +23,11 @@ export class HUD {
     createHUD() {
         const textColor = HUD_CONFIG.TEXT_COLOR;
         const fontStyle = { font: 'bold 18px monospace', fill: textColor };
-        const labelStyle = { font: '14px monospace', fill: textColor };
+        const labelStyle = { font: 'bold 16px monospace', fill: textColor };
         const statStyle = { font: 'bold 16px monospace', fill: textColor };
 
         // Player 1 Area
-        this.p1Label = this.scene.add.text(HUD_CONFIG.P1_X, HUD_CONFIG.Y_START, 'PLAYER 1', labelStyle);
+        this.p1Label = this.scene.add.text(HUD_CONFIG.P1_X, HUD_CONFIG.Y_START, 'PLAYER 1', { ...labelStyle, fill: HUD_CONFIG.PLAYER_1_HEX });
         this.p1HealthBG = this.scene.add.graphics().fillStyle(HUD_CONFIG.HEALTH_BG_COLOR).fillRect(HUD_CONFIG.P1_X, HUD_CONFIG.Y_START + 20, HUD_CONFIG.BAR_WIDTH, HUD_CONFIG.BAR_HEIGHT);
         this.p1HealthBar = this.scene.add.graphics();
         this.p1AngleText = this.scene.add.text(HUD_CONFIG.P1_X, HUD_CONFIG.Y_START + 55, 'ANG: 45°', statStyle);
@@ -35,7 +35,7 @@ export class HUD {
         this.container.add([this.p1Label, this.p1HealthBG, this.p1HealthBar, this.p1AngleText, this.p1PowerText]);
 
         // Player 2 Area
-        this.p2Label = this.scene.add.text(HUD_CONFIG.P2_X, HUD_CONFIG.Y_START, 'PLAYER 2', labelStyle).setOrigin(1, 0);
+        this.p2Label = this.scene.add.text(HUD_CONFIG.P2_X, HUD_CONFIG.Y_START, 'PLAYER 2', { ...labelStyle, fill: HUD_CONFIG.PLAYER_2_HEX }).setOrigin(1, 0);
         this.p2HealthBG = this.scene.add.graphics().fillStyle(HUD_CONFIG.HEALTH_BG_COLOR).fillRect(HUD_CONFIG.P2_X - HUD_CONFIG.BAR_WIDTH, HUD_CONFIG.Y_START + 20, HUD_CONFIG.BAR_WIDTH, HUD_CONFIG.BAR_HEIGHT);
         this.p2HealthBar = this.scene.add.graphics();
         this.p2AngleText = this.scene.add.text(HUD_CONFIG.P2_X, HUD_CONFIG.Y_START + 55, 'ANG: 45°', statStyle).setOrigin(1, 0);
@@ -211,7 +211,8 @@ export class HUD {
             angleTxt.setText(`ANG: ${tank.aimAngle}°`);
             powerTxt.setText(`PWR: ${tank.aimPower}`);
             
-            const color = (idx === activePlayerIndex && isAiming) ? HUD_CONFIG.ACTIVE_COLOR : HUD_CONFIG.TEXT_COLOR;
+            const playerColor = idx === 0 ? HUD_CONFIG.PLAYER_1_HEX : HUD_CONFIG.PLAYER_2_HEX;
+            const color = (idx === activePlayerIndex && isAiming) ? playerColor : HUD_CONFIG.TEXT_COLOR;
             angleTxt.setFill(color);
             powerTxt.setFill(color);
         });
@@ -234,16 +235,26 @@ export class HUD {
         }
 
         if (isAiming) {
-            this.turnIndicator.setVisible(true).setText(isLocalTurn ? 'YOUR TURN' : "OPPONENT'S TURN").setFill(isLocalTurn ? HUD_CONFIG.ACTIVE_COLOR : HUD_CONFIG.DEAD_COLOR);
+            const playerColor = activePlayerIndex === 0 ? HUD_CONFIG.PLAYER_1_HEX : HUD_CONFIG.PLAYER_2_HEX;
+            this.turnIndicator.setVisible(true).setText(isLocalTurn ? 'YOUR TURN' : "OPPONENT'S TURN").setFill(isLocalTurn ? playerColor : HUD_CONFIG.DEAD_COLOR);
         } else {
             this.turnIndicator.setVisible(false);
         }
 
         if (rules.state === GameState.GAME_OVER) {
             this.gameOverOverlay.setVisible(true);
-            const winnerText = rules.winner === -1 ? 'DRAW!' : (rules.winner === -2 ? 'MATCH ABORTED' : `PLAYER ${rules.winner + 1} WINS!`);
+            const isDraw = rules.winner === -1;
+            const isAbort = rules.winner === -2;
+            const winnerText = isDraw ? 'DRAW!' : (isAbort ? 'MATCH ABORTED' : `PLAYER ${rules.winner + 1} WINS!`);
             this.winText.node.innerText = winnerText;
-            if (rules.winner === -2) {
+            
+            if (!isDraw && !isAbort) {
+                this.winText.node.style.color = rules.winner === 0 ? HUD_CONFIG.PLAYER_1_HEX : HUD_CONFIG.PLAYER_2_HEX;
+            } else {
+                this.winText.node.style.color = HUD_CONFIG.TEXT_COLOR;
+            }
+
+            if (isAbort) {
                 this.playAgainBtn.setVisible(false);
             }
         } else {

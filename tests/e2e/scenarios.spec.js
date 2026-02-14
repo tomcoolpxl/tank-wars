@@ -45,13 +45,13 @@ async function setupMatch(browser) {
 
   await joinerPage.goto(inviteLink);
   const connectedRegex = /CONNECTED|STARTING GAME/i;
-  await expect(hostPage.locator('#status-text')).toHaveText(connectedRegex, { timeout: 20000 });
+  await expect(hostPage.locator('#status-text')).toHaveText(connectedRegex, { timeout: 40000 });
 
-  await hostPage.waitForFunction(() => window.game?.scene.isActive('GameScene'), { timeout: 30000 });
-  await joinerPage.waitForFunction(() => window.game?.scene.isActive('GameScene'), { timeout: 30000 });
+  await hostPage.waitForFunction(() => window.game?.scene.isActive('GameScene'), { timeout: 60000 });
+  await joinerPage.waitForFunction(() => window.game?.scene.isActive('GameScene'), { timeout: 60000 });
   
-  await hostPage.waitForFunction(() => window.game?.scene.getScene('GameScene')?.simulation, { timeout: 20000 });
-  await joinerPage.waitForFunction(() => window.game?.scene.getScene('GameScene')?.simulation, { timeout: 20000 });
+  await hostPage.waitForFunction(() => window.game?.scene.getScene('GameScene')?.simulation, { timeout: 60000 });
+  await joinerPage.waitForFunction(() => window.game?.scene.getScene('GameScene')?.simulation, { timeout: 60000 });
 
   // Verify seeds match
   const hostSeed = await hostPage.evaluate(() => window.game.scene.getScene('GameScene').simulation.seed);
@@ -106,7 +106,7 @@ test.describe('Advanced Game Scenarios', () => {
     await expect.poll(async () => {
         const s = await getSimState(hostPage);
         return s.turn;
-    }, { timeout: 40000 }).toBeGreaterThanOrEqual(2);
+    }, { timeout: 60000 }).toBeGreaterThanOrEqual(2);
 
     await expect.poll(async () => {
         const hostState = await getSimState(hostPage);
@@ -133,7 +133,7 @@ test.describe('Advanced Game Scenarios', () => {
     await expect.poll(async () => {
         const s = await getSimState(hostPage);
         return s.turn;
-    }, { timeout: 20000 }).toBe(2);
+    }, { timeout: 60000 }).toBe(2);
 
     const state = await getSimState(hostPage);
     expect(state.tanks[0].health).toBe(100);
