@@ -1,5 +1,7 @@
 # Tank Wars (Deterministic P2P Artillery)
 
+![screenshot](screenshot.png)
+
 A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspired by classic artillery games, featuring a neon vector aesthetic and perfectly synchronized physics.
 
 ## Features
