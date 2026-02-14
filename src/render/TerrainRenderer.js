@@ -27,13 +27,28 @@ export class TerrainRenderer {
         this.graphics.lineStyle(2, color, 1.0);
         this.drawTerrainPath(this.graphics, terrain);
         
-        // Inner glow
-        this.glowGraphics[0].lineStyle(6, color, 0.3);
+        // Multiple layers of glow for a smoother transition
+        this.glowGraphics[0].lineStyle(4, color, 0.4);
         this.drawTerrainPath(this.glowGraphics[0], terrain);
         
-        // Outer glow
-        this.glowGraphics[1].lineStyle(12, color, 0.1);
+        this.glowGraphics[1].lineStyle(8, color, 0.2);
         this.drawTerrainPath(this.glowGraphics[1], terrain);
+
+        if (!this.glow3) {
+            this.glow3 = this.scene.add.graphics();
+            this.glow3.setDepth(0);
+        }
+        this.glow3.clear();
+        this.glow3.lineStyle(16, color, 0.1);
+        this.drawTerrainPath(this.glow3, terrain);
+
+        if (!this.glow4) {
+            this.glow4 = this.scene.add.graphics();
+            this.glow4.setDepth(-1);
+        }
+        this.glow4.clear();
+        this.glow4.lineStyle(32, color, 0.05);
+        this.drawTerrainPath(this.glow4, terrain);
     }
 
     drawTerrainPath(graphics, terrain) {
@@ -54,5 +69,7 @@ export class TerrainRenderer {
         this.graphics.alpha = pulse;
         this.glowGraphics[0].alpha = pulse * 0.6;
         this.glowGraphics[1].alpha = pulse * 0.3;
+        if (this.glow3) this.glow3.alpha = pulse * 0.15;
+        if (this.glow4) this.glow4.alpha = pulse * 0.07;
     }
 }

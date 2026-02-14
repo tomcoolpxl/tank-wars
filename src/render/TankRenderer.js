@@ -13,24 +13,27 @@ export class TankRenderer {
                 container = this.scene.add.container(0, 0);
                 
                 const glowOuter = this.scene.add.graphics();
+                const glowMid = this.scene.add.graphics();
                 const glowInner = this.scene.add.graphics();
                 const main = this.scene.add.graphics();
                 const healthBar = this.scene.add.graphics();
                 
-                container.add([glowOuter, glowInner, main, healthBar]);
+                container.add([glowOuter, glowMid, glowInner, main, healthBar]);
                 container.setDepth(10);
                 this.tankContainers.set(tank.id, container);
                 
                 container.glowOuter = glowOuter;
+                container.glowMid = glowMid;
                 container.glowInner = glowInner;
                 container.main = main;
                 container.healthBar = healthBar;
             }
             
-            const { glowOuter, glowInner, main, healthBar } = container;
+            const { glowOuter, glowMid, glowInner, main, healthBar } = container;
             
             main.clear();
             glowInner.clear();
+            glowMid.clear();
             glowOuter.clear();
             healthBar.clear();
 
@@ -40,9 +43,6 @@ export class TankRenderer {
             // Draw half-circle platform (base)
             main.lineStyle(2, drawColor, 1.0);
             main.beginPath();
-            // Arc: x, y, radius, startAngle, endAngle, anticlockwise
-            // Half circle facing up: from PI to 0 (or vice versa depending on Phaser's coordinate system)
-            // Actually, Phaser arc is center x, y.
             main.arc(0, 0, TANK_WIDTH / 2, Math.PI, 0, false);
             main.lineTo(TANK_WIDTH / 2, 0);
             main.lineTo(-TANK_WIDTH / 2, 0);
@@ -54,19 +54,22 @@ export class TankRenderer {
                 glowInner.lineStyle(6, drawColor, 0.3);
                 glowInner.arc(0, 0, TANK_WIDTH / 2, Math.PI, 0, false);
                 glowInner.strokePath();
+
+                glowMid.lineStyle(12, drawColor, 0.15);
+                glowMid.arc(0, 0, TANK_WIDTH / 2, Math.PI, 0, false);
+                glowMid.strokePath();
                 
-                glowOuter.lineStyle(12, drawColor, 0.1);
+                glowOuter.lineStyle(24, drawColor, 0.05);
                 glowOuter.arc(0, 0, TANK_WIDTH / 2, Math.PI, 0, false);
                 glowOuter.strokePath();
 
                 // Draw gun barrel
-                // aimAngle is relative to the flat line of the half circle.
-                // 0 is right, 90 is up, 180 is left.
-                // In our half circle, the flat line is at y=0.
-                // So we want to rotate by -aimAngle (Phaser is clockwise).
                 const angleRad = -tank.aimAngle * Math.PI / 180;
                 main.lineStyle(4, drawColor, 1.0);
                 main.lineBetween(0, 0, Math.cos(angleRad) * 20, Math.sin(angleRad) * 20);
+                
+                glowInner.lineStyle(8, drawColor, 0.3);
+                glowInner.lineBetween(0, 0, Math.cos(angleRad) * 20, Math.sin(angleRad) * 20);
             }
             
             // Position
@@ -86,7 +89,8 @@ export class TankRenderer {
         this.tankContainers.forEach(container => {
             container.main.alpha = pulse;
             container.glowInner.alpha = pulse * 0.6;
-            container.glowOuter.alpha = pulse * 0.3;
+            if (container.glowMid) container.glowMid.alpha = pulse * 0.3;
+            container.glowOuter.alpha = pulse * 0.15;
         });
     }
 }

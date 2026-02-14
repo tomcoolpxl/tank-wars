@@ -4,14 +4,16 @@ export class ProjectileRenderer {
     constructor(scene) {
         this.scene = scene;
         this.glowOuter = this.scene.add.graphics();
+        this.glowMid = this.scene.add.graphics();
         this.glowInner = this.scene.add.graphics();
         this.main = this.scene.add.graphics();
         this.trail = this.scene.add.graphics();
         
-        this.glowOuter.setDepth(19);
+        this.glowOuter.setDepth(18);
+        this.glowMid.setDepth(19);
         this.glowInner.setDepth(20);
         this.main.setDepth(21);
-        this.trail.setDepth(18);
+        this.trail.setDepth(17);
         
         this.trailPoints = [];
         this.maxTrailPoints = 20;
@@ -20,6 +22,7 @@ export class ProjectileRenderer {
     render(projectile) {
         this.main.clear();
         this.glowInner.clear();
+        this.glowMid.clear();
         this.glowOuter.clear();
         
         if (!projectile) {
@@ -56,15 +59,19 @@ export class ProjectileRenderer {
         
         this.glowInner.fillStyle(color, 0.4);
         this.glowInner.fillCircle(x, y, 6);
+
+        this.glowMid.fillStyle(color, 0.2);
+        this.glowMid.fillCircle(x, y, 12);
         
-        this.glowOuter.fillStyle(color, 0.15);
-        this.glowOuter.fillCircle(x, y, 12);
+        this.glowOuter.fillStyle(color, 0.1);
+        this.glowOuter.fillCircle(x, y, 24);
     }
 
     update(time) {
         const pulse = 0.9 + Math.sin(time / 200) * 0.1;
         this.main.alpha = pulse;
         this.glowInner.alpha = pulse * 0.6;
-        this.glowOuter.alpha = pulse * 0.3;
+        this.glowMid.alpha = pulse * 0.3;
+        this.glowOuter.alpha = pulse * 0.15;
     }
 }
