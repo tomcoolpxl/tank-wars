@@ -72,25 +72,28 @@ export class NetworkManager {
 
     setupConnection(conn) {
         conn.on('open', () => {
+            console.log(`NET: Connection opened with peer ${conn.peer}`);
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback('connected');
             }
         });
 
         conn.on('data', (data) => {
+            console.log('NET: Received:', JSON.stringify(data));
             if (this.onMessageCallback) {
                 this.onMessageCallback(data);
             }
         });
 
         conn.on('close', () => {
+            console.log('NET: Connection closed');
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback('closed');
             }
         });
 
         conn.on('error', (err) => {
-            console.error('Connection error:', err);
+            console.error('NET: Connection error:', err);
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback('failed');
             }
@@ -99,7 +102,10 @@ export class NetworkManager {
 
     send(message) {
         if (this.connection && this.connection.open) {
+            console.log('NET: Sending:', JSON.stringify(message));
             this.connection.send(message);
+        } else {
+            console.warn('NET: Attempted to send while disconnected:', JSON.stringify(message));
         }
     }
 

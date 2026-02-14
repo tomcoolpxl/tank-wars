@@ -8,7 +8,7 @@ Tank Wars uses a multi-layered testing approach to ensure determinism, physics c
 
 *   **Unit Tests:** Fast, isolated tests for the simulation core using `vitest`.
 *   **Integration Tests:** Turn-flow and state machine verification.
-*   **End-to-End (E2E) Tests:** Multi-browser automation using `playwright` to test WebRTC P2P and synchronized gameplay.
+*   **End-to-End (E2E) Tests:** Multi-browser automation using `playwright` to test PeerJS P2P and synchronized gameplay.
 *   **Code Coverage:** Measured via `@vitest/coverage-v8`.
 
 ## 2. Quick Start
@@ -47,8 +47,9 @@ These tests target the `src/simulation/` directory and run in Node.js.
 *   `sim.test.js`: Full turn integration and state serialization.
 
 ### 3.2 E2E Scenarios (`tests/e2e/`)
-These tests orchestrate two browser instances to simulate P2P matches.
-*   `match.spec.js`: Basic handshake and multi-turn synchronization.
+These tests orchestrate two browser instances to simulate P2P matches using the PeerJS automated handshake.
+*   `invite_link.spec.js`: Verification of the automated `#join=ID` handshake flow.
+*   `match.spec.js`: Basic match setup, multi-turn synchronization, and gameplay.
 *   `scenarios.spec.js`: Advanced edge cases:
     *   **Auto-fire:** Verification of deterministic timeout shooting.
     *   **Out-of-bounds:** Ensuring off-map projectiles terminate without explosion.
@@ -62,6 +63,7 @@ Determinism is the most critical aspect of the project. It is verified in three 
 1.  **State Hashes:** The simulation generates a recursive hash of all critical state (terrain, tank positions, health, RNG state).
 2.  **Turn Synchronization:** In E2E tests, both browser instances compare their state hashes after every turn.
 3.  **Standalone Harness:** `tests/determinism.js` can be used to run two parallel simulations headlessly and verify they never drift.
+4.  **Seed Sync:** Verified in E2E tests to ensure both peers start with the identical PRNG seed provided by the Host.
 
 ## 5. Continuous Integration (CI)
 

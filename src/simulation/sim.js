@@ -11,17 +11,16 @@ import {
 
 export class Simulation {
     constructor(seed) {
-        this.seed = seed;
-        this.rng = new RNG(seed);
+        this.seed = seed >>> 0;
+        this.rng = new RNG(this.seed);
         this.terrain = new Terrain();
-        this.terrain.generate(seed);
+        this.terrain.generate(this.seed);
         
         this.tanks = [
             this.createTank(0, TANK_SPAWN_LEFT_RANGE),
             this.createTank(1, TANK_SPAWN_RIGHT_RANGE)
         ];
 
-        // Initial snap to terrain and slope calculation
         for (const tank of this.tanks) {
             tank.step(this.terrain);
         }
@@ -36,7 +35,7 @@ export class Simulation {
     createTank(id, range) {
         const x = this.rng.nextInt(range[0], range[1]);
         const y = this.terrain.getHeightAtX(x);
-        return new Tank(id, x * FP, (y + 6) * FP); // Start slightly above ground
+        return new Tank(id, x * FP, (y + 6) * FP);
     }
 
     start() {
@@ -49,25 +48,18 @@ export class Simulation {
 
         switch (this.rules.state) {
             case GameState.TURN_AIM:
-                // Decrement timer (allow negative if auto-fire is disabled to wait for remote)
                 this.rules.turnTimer--;
-
-                // Auto-fire if timer reaches 0 and is enabled
                 if (this.rules.turnTimer <= 0 && this.autoFireEnabled) {
                     const t = this.tanks[this.rules.activePlayerIndex];
                     this.fire(t.aimAngle, t.aimPower, this.rules.activePlayerIndex);
                     break;
                 }
-
-                // Apply inputs to active tank
                 const activeTank = this.tanks[this.rules.activePlayerIndex];
+                if (inputs.left) activeTank.aimAngle = (activeTank.aimAngle + 1) | 0;
+                if (inputs.right) activeTank.aimAngle = (activeTank.aimAngle - 1) | 0;
+                if (inputs.up) activeTank.aimPower = (activeTank.aimPower + 1) | 0;
+                if (inputs.down) activeTank.aimPower = (activeTank.aimPower - 1) | 0;
                 
-                if (inputs.left) activeTank.aimAngle += 1;
-                if (inputs.right) activeTank.aimAngle -= 1;
-                if (inputs.up) activeTank.aimPower += 1;
-                if (inputs.down) activeTank.aimPower -= 1;
-
-                // Clamp values
                 if (activeTank.aimAngle < 0) activeTank.aimAngle = 0;
                 if (activeTank.aimAngle > 180) activeTank.aimAngle = 180;
                 if (activeTank.aimPower < 0) activeTank.aimPower = 0;
@@ -81,8 +73,6 @@ export class Simulation {
                         if (result.type === 'explosion') {
                             applyExplosion(result.x, result.y, this.terrain, this.tanks);
                             this.events.push({ type: 'explosion', x: result.x, y: result.y });
-                        } else {
-                            this.events.push(result);
                         }
                         this.projectile = null;
                         this.rules.state = GameState.POST_EXPLOSION_STABILIZE;
@@ -97,9 +87,7 @@ export class Simulation {
                     tank.step(this.terrain);
                     if (!tank.stable) allStable = false;
                 }
-                
                 this.rules.stabilizationTimer--;
-                
                 if (allStable || this.rules.stabilizationTimer <= 0) {
                     this.checkWinConditions();
                     if (this.rules.state !== GameState.GAME_OVER) {
@@ -112,30 +100,17 @@ export class Simulation {
 
     fire(angle, power, playerIndex) {
         if (this.rules.state !== GameState.TURN_AIM) return;
-        
-        // Security check: ensure only active player can fire
-        if (playerIndex !== undefined && playerIndex !== this.rules.activePlayerIndex) {
-            console.error(`Rejected fire() from player ${playerIndex} on player ${this.rules.activePlayerIndex}'s turn.`);
-            return;
-        }
+        if (playerIndex !== undefined && playerIndex !== this.rules.activePlayerIndex) return;
 
         const activeTank = this.tanks[this.rules.activePlayerIndex];
-        activeTank.aimAngle = angle;
-        activeTank.aimPower = power;
+        activeTank.aimAngle = angle | 0;
+        activeTank.aimPower = power | 0;
 
-        // Spawn at barrel tip (20 units out)
-        const totalAngle = activeTank.baseAngleDeg + angle;
+        const totalAngle = (activeTank.baseAngleDeg + activeTank.aimAngle) | 0;
         const spawnX = activeTank.x_fp + Math.floor(20 * getCos(totalAngle));
         const spawnY = activeTank.y_fp + Math.floor(20 * getSin(totalAngle));
 
-        this.projectile = new Projectile(
-            spawnX, 
-            spawnY, 
-            totalAngle, 
-            power, 
-            this.rules.wind,
-            activeTank.id
-        );
+        this.projectile = new Projectile(spawnX, spawnY, totalAngle, activeTank.aimPower, this.rules.wind, activeTank.id);
         this.rules.state = GameState.PROJECTILE_FLIGHT;
     }
 
@@ -143,35 +118,46 @@ export class Simulation {
         const aliveTanks = this.tanks.filter(t => t.alive);
         if (aliveTanks.length === 0) {
             this.rules.state = GameState.GAME_OVER;
-            this.rules.winner = -1; // Draw
+            this.rules.winner = -1;
         } else if (aliveTanks.length === 1) {
             this.rules.state = GameState.GAME_OVER;
             this.rules.winner = aliveTanks[0].id;
         }
     }
 
+    getStateHash() {
+        let h = 0;
+        const hashInt = (val) => { h = (Math.imul(h, 31) + (val | 0)) | 0; };
+        for (let i = 0; i < this.terrain.heights.length; i++) hashInt(this.terrain.heights[i]);
+        for (const t of this.tanks) {
+            hashInt(t.x_fp); hashInt(t.y_fp); hashInt(t.health);
+            hashInt(t.baseAngleDeg); hashInt(t.aimAngle); hashInt(t.aimPower);
+            hashInt(t.alive ? 1 : 0);
+        }
+        if (this.projectile) {
+            hashInt(1); hashInt(this.projectile.x_fp); hashInt(this.projectile.y_fp);
+        } else {
+            hashInt(0);
+        }
+        hashInt(this.rules.wind); hashInt(this.rules.turnNumber);
+        hashInt(this.rules.activePlayerIndex); hashInt(this.rules.state === GameState.GAME_OVER ? 1 : 0);
+        hashInt(this.rules.winner !== null ? this.rules.winner : -3);
+        hashInt(this.rng.state);
+        return h;
+    }
+
     getState() {
         return {
             terrain: Array.from(this.terrain.heights),
             tanks: this.tanks.map(t => ({
-                id: t.id,
-                x_fp: t.x_fp,
-                y_fp: t.y_fp,
-                vx_fp: t.vx_fp,
-                vy_fp: t.vy_fp,
-                health: t.health,
-                alive: t.alive,
-                baseAngleDeg: t.baseAngleDeg,
-                aimAngle: t.aimAngle,
-                aimPower: t.aimPower
+                id: t.id, x_fp: t.x_fp, y_fp: t.y_fp, vx_fp: t.vx_fp, vy_fp: t.vy_fp,
+                health: t.health, alive: t.alive, baseAngleDeg: t.baseAngleDeg,
+                aimAngle: t.aimAngle, aimPower: t.aimPower
             })),
             rules: {
-                turnNumber: this.rules.turnNumber,
-                activePlayerIndex: this.rules.activePlayerIndex,
-                state: this.rules.state,
-                turnTimer: this.rules.turnTimer,
-                wind: this.rules.wind,
-                winner: this.rules.winner,
+                turnNumber: this.rules.turnNumber, activePlayerIndex: this.rules.activePlayerIndex,
+                state: this.rules.state, turnTimer: this.rules.turnTimer,
+                wind: this.rules.wind, winner: this.rules.winner,
                 stabilizationTimer: this.rules.stabilizationTimer
             },
             rngState: this.rng.state,
@@ -180,27 +166,13 @@ export class Simulation {
     }
 
     setState(state) {
-        // Restore Terrain
-        for (let i = 0; i < state.terrain.length; i++) {
-            this.terrain.heights[i] = state.terrain[i];
-        }
-
-        // Restore Tanks
+        for (let i = 0; i < state.terrain.length; i++) this.terrain.heights[i] = state.terrain[i];
         for (let i = 0; i < state.tanks.length; i++) {
-            const s = state.tanks[i];
-            const t = this.tanks[i];
-            t.x_fp = s.x_fp;
-            t.y_fp = s.y_fp;
-            t.vx_fp = s.vx_fp;
-            t.vy_fp = s.vy_fp;
-            t.health = s.health;
-            t.alive = s.alive;
-            t.baseAngleDeg = s.baseAngleDeg;
-            t.aimAngle = s.aimAngle;
-            t.aimPower = s.aimPower;
+            const s = state.tanks[i]; const t = this.tanks[i];
+            t.x_fp = s.x_fp; t.y_fp = s.y_fp; t.vx_fp = s.vx_fp; t.vy_fp = s.vy_fp;
+            t.health = s.health; t.alive = s.alive; t.baseAngleDeg = s.baseAngleDeg;
+            t.aimAngle = s.aimAngle; t.aimPower = s.aimPower;
         }
-
-        // Restore Rules
         this.rules.turnNumber = state.rules.turnNumber;
         this.rules.activePlayerIndex = state.rules.activePlayerIndex;
         this.rules.state = state.rules.state;
@@ -208,58 +180,7 @@ export class Simulation {
         this.rules.wind = state.rules.wind;
         this.rules.winner = state.rules.winner;
         this.rules.stabilizationTimer = state.rules.stabilizationTimer;
-
-        // Restore RNG and counters
         this.rng.state = state.rngState;
         this.tickCount = state.tickCount;
-    }
-
-    getStateHash() {
-        // More robust hash for determinism checking
-        let h = 0;
-        const hashInt = (val) => {
-            h = (Math.imul(h, 31) + (val | 0)) | 0;
-        };
-
-        // 1. Terrain
-        for (let i = 0; i < this.terrain.heights.length; i++) {
-            hashInt(this.terrain.heights[i]);
-        }
-
-        // 2. Tanks
-        for (const tank of this.tanks) {
-            hashInt(tank.x_fp);
-            hashInt(tank.y_fp);
-            hashInt(tank.vx_fp);
-            hashInt(tank.vy_fp);
-            hashInt(tank.health);
-            hashInt(tank.baseAngleDeg);
-            hashInt(tank.aimAngle);
-            hashInt(tank.aimPower);
-            hashInt(tank.alive ? 1 : 0);
-        }
-
-        // 3. Projectile
-        if (this.projectile) {
-            hashInt(1);
-            hashInt(this.projectile.x_fp);
-            hashInt(this.projectile.y_fp);
-            hashInt(this.projectile.vx_fp);
-            hashInt(this.projectile.vy_fp);
-        } else {
-            hashInt(0);
-        }
-
-        // 4. Wind and Rules
-        hashInt(this.rules.wind);
-        hashInt(this.rules.turnNumber);
-        hashInt(this.rules.activePlayerIndex);
-        hashInt(this.rules.state);
-        // hashInt(this.rules.turnTimer); // Excluded for P2P tolerance
-
-        // 5. RNG State
-        hashInt(this.rng.state);
-
-        return h;
     }
 }

@@ -15,7 +15,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // Create a simple particle texture if not present
         if (!this.textures.exists('particle')) {
             const graphics = this.make.graphics({ x: 0, y: 0, add: false });
             graphics.fillStyle(0xffffff);
@@ -30,80 +29,65 @@ export class GameScene extends Phaser.Scene {
         this.seed = data.seed;
         this.localPlayerIndex = this.isHost ? 0 : 1;
         this.recordedShots = [];
-        
         this.isReplaying = !!data.replayShots;
         this.replayShots = data.replayShots || [];
         this.replayIndex = 0;
-        
         this.lastTurnNumber = 0;
         this.lastGameState = null;
     }
 
     create() {
-        // Initialize simulation with the shared seed
         this.simulation = new Simulation(this.seed);
         this.simulation.start();
         this.lastTurnNumber = this.simulation.rules.turnNumber;
         this.lastGameState = this.simulation.rules.state;
 
-        // Listen for network messages
+        // Send initial state hash to confirm sync at Turn 0
+        this.sendHash(0);
+
         if (this.networkManager) {
             this.networkManager.onMessage((msg) => {
                 if (this.isReplaying) return;
                 switch (msg.type) {
-                    case 'SHOT':
-                        this.handleRemoteShot(msg);
-                        break;
-                    case 'HASH':
-                        this.handleRemoteHash(msg);
-                        break;
-                    case 'SYNC':
-                        this.handleRemoteSync(msg);
-                        break;
+                    case 'SHOT': this.handleRemoteShot(msg); break;
+                    case 'HASH': this.handleRemoteHash(msg); break;
+                    case 'SYNC': this.handleRemoteSync(msg); break;
+                    case 'ABORT': this.handleRemoteAbort(msg); break;
                 }
             });
         }
 
-        // Initialize renderers
         this.terrainRenderer = new TerrainRenderer(this);
         this.tankRenderer = new TankRenderer(this);
         this.projectileRenderer = new ProjectileRenderer(this);
         this.explosionRenderer = new ExplosionRenderer(this);
 
-        // Initial render
         this.terrainRenderer.render(this.simulation.terrain);
         this.tankRenderer.render(this.simulation.tanks, this.simulation.terrain);
-
-        // Initialize HUD
         this.hud = new HUD(this);
         
-        // Input keys
         this.cursors = this.input.keyboard.createCursorKeys();
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        this.pKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
-        this.rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
     }
 
     handleRemoteShot(msg) {
         if (this.simulation.rules.state !== GameState.TURN_AIM) return;
         if (this.simulation.rules.activePlayerIndex === this.localPlayerIndex) {
-            this.abortMatch('Protocol Error: Received SHOT on our turn');
+            this.abortMatch('Protocol Error: SHOT on our turn');
             return;
         }
         if (msg.turnNumber !== this.simulation.rules.turnNumber) {
-            this.abortMatch(`Protocol Error: Turn mismatch (Expected ${this.simulation.rules.turnNumber}, got ${msg.turnNumber})`);
+            this.abortMatch(`Protocol Error: Turn mismatch`);
             return;
         }
 
-        // 8.5 SHOT MESSAGE VALIDATION: angleDeg must be an integer in [0, 180]
-        const angle = msg.angle;
-        const power = msg.power;
-        
+        const angle = Math.floor(msg.angle);
+        const power = Math.floor(msg.power);
         const isInvalid = !Number.isInteger(angle) || angle < 0 || angle > 180 || 
                           !Number.isInteger(power) || power < 0 || power > 100;
         
         if (isInvalid) {
-            this.abortMatch(`Security Error: Invalid SHOT parameters (${angle}, ${power})`);
+            this.abortMatch(`Security Error: Invalid parameters`);
             return;
         }
 
@@ -111,197 +95,132 @@ export class GameScene extends Phaser.Scene {
         this.simulation.fire(angle, power, this.simulation.rules.activePlayerIndex);
     }
 
-    abortMatch(reason) {
-        console.error(`ABORTING MATCH: ${reason}`);
-        this.simulation.rules.state = GameState.GAME_OVER;
-        this.simulation.rules.winner = -2; // Special value for aborted/error
-        
-        // Show error on HUD
-        if (this.hud) {
-            this.hud.winText.setText('MATCH ABORTED');
-            this.hud.gameOverSubtext.setText(reason.toUpperCase());
-            this.hud.gameOverOverlay.setVisible(true);
-        }
-    }
-
     handleRemoteHash(msg) {
-        if (!this.isHost) return; // Only host validates hashes
-        
+        if (!this.isHost) return;
         const myHash = this.simulation.getStateHash();
         if (msg.hash !== myHash) {
-            console.warn(`Hash mismatch detected at turn ${msg.turnNumber}! (Remote: ${msg.hash}, Local: ${myHash})`);
-            console.warn('Sending authoritative state SYNC to client.');
+            console.warn(`Desync at turn ${msg.turnNumber}! Local: ${myHash}, Remote: ${msg.hash}`);
             this.networkManager.send({
                 type: 'SYNC',
-                state: this.simulation.getState()
+                state: this.simulation.getState(),
+                turnNumber: msg.turnNumber
             });
-        } else {
-            console.log(`Hash match at turn ${msg.turnNumber}.`);
         }
     }
 
     handleRemoteSync(msg) {
-        if (this.isHost) return; // Client only accepts sync from host
-        console.log('Received authoritative state SYNC from host. Applying...');
+        if (this.isHost) return;
         this.simulation.setState(msg.state);
-        // Refresh visuals
         this.terrainRenderer.render(this.simulation.terrain);
         this.tankRenderer.render(this.simulation.tanks, this.simulation.terrain);
     }
 
-    handleTurnTransition() {
+    handleRemoteAbort(msg) {
+        this.simulation.rules.state = GameState.GAME_OVER;
+        this.simulation.rules.winner = -2;
+        if (this.hud) {
+            this.hud.winText.setText('MATCH ABORTED');
+            this.hud.gameOverSubtext.setText(msg.reason.toUpperCase());
+            this.hud.gameOverOverlay.setVisible(true);
+        }
+    }
+
+    abortMatch(reason) {
+        console.error(`ABORTING: ${reason}`);
+        this.handleRemoteAbort({ reason });
+        if (this.networkManager) {
+            this.networkManager.send({ type: 'ABORT', reason });
+        }
+    }
+
+    sendHash(turnNumber) {
         if (!this.networkManager || this.isReplaying) return;
-        
-        const hash = this.simulation.getStateHash();
-        console.log(`Turn ended. Sending HASH: ${hash} for turn ${this.lastTurnNumber}`);
         this.networkManager.send({
             type: 'HASH',
-            turnNumber: this.lastTurnNumber,
-            hash: hash
+            turnNumber: turnNumber,
+            hash: this.simulation.getStateHash()
         });
     }
 
     recordShot(angle, power) {
-        this.recordedShots.push({
-            turn: this.simulation.rules.turnNumber,
-            player: this.simulation.rules.activePlayerIndex,
-            angle,
-            power,
-            hashBefore: this.simulation.getStateHash()
-        });
-        console.log(`Recorded shot: Turn ${this.simulation.rules.turnNumber}, Player ${this.simulation.rules.activePlayerIndex}, Angle ${angle}, Power ${power}`);
+        this.recordedShots.push({ turn: this.simulation.rules.turnNumber, angle, power });
     }
 
     update(time, delta) {
         this.tickAccumulator += delta;
-
-        const isMyTurn = this.simulation.rules.activePlayerIndex === this.localPlayerIndex;
+        const localTurn = this.simulation.rules.activePlayerIndex === this.localPlayerIndex;
         const isAiming = this.simulation.rules.state === GameState.TURN_AIM;
 
-        // Capture inputs ONLY if it is my turn
         const inputs = {
-            left: isMyTurn && isAiming && this.cursors.left.isDown,
-            right: isMyTurn && isAiming && this.cursors.right.isDown,
-            up: isMyTurn && isAiming && this.cursors.up.isDown,
-            down: isMyTurn && isAiming && this.cursors.down.isDown
+            left: localTurn && isAiming && this.cursors.left.isDown,
+            right: localTurn && isAiming && this.cursors.right.isDown,
+            up: localTurn && isAiming && this.cursors.up.isDown,
+            down: localTurn && isAiming && this.cursors.down.isDown
         };
 
         let ticksProcessed = 0;
-        // Fixed time step loop
         while (this.tickAccumulator >= TICK_DURATION_MS) {
-            // Only auto-fire if it's our turn
-            this.simulation.autoFireEnabled = isMyTurn;
-
+            this.simulation.autoFireEnabled = localTurn;
             const prevState = this.simulation.rules.state;
+            const prevTurn = this.simulation.rules.turnNumber;
+
             this.simulation.step(inputs);
             
-            // Handle auto-fire fallback for passive player (grace period: 5 seconds / 300 ticks)
-            if (!isMyTurn && this.simulation.rules.state === GameState.TURN_AIM && this.simulation.rules.turnTimer < -300) {
-                console.warn('Active player timeout. Force triggering auto-fire.');
-                const t = this.simulation.tanks[this.simulation.rules.activePlayerIndex];
-                this.simulation.fire(t.aimAngle, t.aimPower, this.simulation.rules.activePlayerIndex);
+            if (this.simulation.rules.turnNumber !== prevTurn) {
+                this.sendHash(prevTurn);
             }
 
-            // Detect turn transition
-            if (this.simulation.rules.turnNumber !== this.lastTurnNumber) {
-                this.handleTurnTransition();
-                this.lastTurnNumber = this.simulation.rules.turnNumber;
+            if (prevState !== GameState.GAME_OVER && this.simulation.rules.state === GameState.GAME_OVER) {
+                this.sendHash(this.simulation.rules.turnNumber);
             }
 
-            // Detect state transition (from manual or auto fire)
-            if (this.simulation.rules.state !== this.lastGameState) {
-                // If WE are the ones who just auto-fired (timer <= 0), we MUST send the SHOT message
-                if (isMyTurn && prevState === GameState.TURN_AIM && this.simulation.rules.state === GameState.PROJECTILE_FLIGHT) {
-                    if (this.simulation.rules.turnTimer <= 0) {
-                        const activeTank = this.simulation.tanks[this.localPlayerIndex];
-                        const shotData = {
-                            type: 'SHOT',
-                            turnNumber: this.simulation.rules.turnNumber,
-                            angle: activeTank.aimAngle,
-                            power: activeTank.aimPower
-                        };
-                        this.networkManager.send(shotData);
-                        this.recordShot(activeTank.aimAngle, activeTank.aimPower);
-                    }
-                }
-                this.lastGameState = this.simulation.rules.state;
-            }
-
-            // Check for local manual fire
-            if (!this.isReplaying && isMyTurn && isAiming) {
-                const activeTank = this.simulation.tanks[this.localPlayerIndex];
-                if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-                    const shotData = {
+            if (localTurn && prevState === GameState.TURN_AIM && this.simulation.rules.state === GameState.PROJECTILE_FLIGHT) {
+                if (this.simulation.rules.turnTimer <= 0) {
+                    const activeTank = this.simulation.tanks[this.localPlayerIndex];
+                    this.networkManager.send({
                         type: 'SHOT',
                         turnNumber: this.simulation.rules.turnNumber,
                         angle: activeTank.aimAngle,
                         power: activeTank.aimPower
-                    };
-                    this.networkManager.send(shotData);
+                    });
                     this.recordShot(activeTank.aimAngle, activeTank.aimPower);
-                    this.simulation.fire(activeTank.aimAngle, activeTank.aimPower, this.localPlayerIndex);
                 }
             }
 
-            // Auto-fire replay shots
-            if (this.isReplaying && isAiming && this.replayIndex < this.replayShots.length) {
-                const nextShot = this.replayShots[this.replayIndex];
-                if (nextShot.turn === this.simulation.rules.turnNumber) {
-                    this.simulation.fire(nextShot.angle, nextShot.power, this.simulation.rules.activePlayerIndex);
-                    this.replayIndex++;
-                }
+            // Passive player timeout fallback
+            if (!localTurn && isAiming && this.simulation.rules.turnTimer < -300) {
+                const t = this.simulation.tanks[this.simulation.rules.activePlayerIndex];
+                this.simulation.fire(t.aimAngle, t.aimPower, this.simulation.rules.activePlayerIndex);
             }
 
-            // Handle events
             for (const event of this.simulation.events) {
                 if (event.type === 'explosion') {
                     this.explosionRenderer.playExplosion(event.x, event.y);
-                    // Update terrain visual
                     this.terrainRenderer.render(this.simulation.terrain);
-                } else if (event.type === 'out-of-bounds') {
-                    this.hud.showStatus('OUT OF BOUNDS', 2000);
-                } else if (event.type === 'timeout') {
-                    this.hud.showStatus('PROJECTILE TIMEOUT', 2000);
                 }
             }
 
             this.tickAccumulator -= TICK_DURATION_MS;
-            ticksProcessed++;
-            
-            // Safety break to avoid spiral of death
-            if (ticksProcessed > 10) {
-                this.tickAccumulator = 0;
-                break;
-            }
+            if (++ticksProcessed > 10) break;
         }
 
-        // Render update (interpolation could be added here later)
+        if (!this.isReplaying && localTurn && isAiming && Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+            const activeTank = this.simulation.tanks[this.localPlayerIndex];
+            this.networkManager.send({
+                type: 'SHOT',
+                turnNumber: this.simulation.rules.turnNumber,
+                angle: activeTank.aimAngle,
+                power: activeTank.aimPower
+            });
+            this.recordShot(activeTank.aimAngle, activeTank.aimPower);
+            this.simulation.fire(activeTank.aimAngle, activeTank.aimPower, this.localPlayerIndex);
+        }
+
         this.tankRenderer.render(this.simulation.tanks, this.simulation.terrain);
         this.projectileRenderer.render(this.simulation.projectile);
-
-        // Update HUD
         this.hud.update(this.simulation, this.localPlayerIndex);
-
-        // Apply visual effects (flicker, etc)
         this.terrainRenderer.update(time);
         this.tankRenderer.update(time);
         this.projectileRenderer.update(time);
-
-        if (Phaser.Input.Keyboard.JustDown(this.pKey)) {
-            console.log('--- REPLAY DATA ---');
-            console.log('Seed:', this.seed);
-            console.log('Shots:', JSON.stringify(this.recordedShots, null, 2));
-            console.log('-------------------');
-        }
-
-        if (Phaser.Input.Keyboard.JustDown(this.rKey)) {
-            console.log('RESTARTING WITH REPLAY...');
-            this.scene.restart({
-                networkManager: this.networkManager,
-                isHost: this.isHost,
-                seed: this.seed,
-                replayShots: this.recordedShots
-            });
-        }
     }
 }

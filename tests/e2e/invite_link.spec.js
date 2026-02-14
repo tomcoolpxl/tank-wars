@@ -32,8 +32,9 @@ test('Invite link handshake (PeerJS)', async ({ browser }) => {
   await joinerPage.goto(inviteLink);
   
   // Verify automated connection
-  await expect(joinerPage.locator('#status-text')).toHaveText(/CONNECTED/i, { timeout: 20000 });
-  await expect(hostPage.locator('#status-text')).toHaveText(/CONNECTED/i, { timeout: 20000 });
+  const connectedRegex = /CONNECTED|STARTING GAME/i;
+  await expect(joinerPage.locator('#status-text')).toHaveText(connectedRegex, { timeout: 20000 });
+  await expect(hostPage.locator('#status-text')).toHaveText(connectedRegex, { timeout: 20000 });
 
   // 3. Verify scene transition
   await hostPage.waitForFunction(() => 

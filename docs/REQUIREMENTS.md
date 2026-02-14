@@ -1,7 +1,7 @@
 GAME REQUIREMENTS DOCUMENT
 Project: Deterministic P2P Artillery Tanks
 Hosting: Static (GitHub Pages)
-Networking: WebRTC P2P, manual signaling, deterministic lockstep
+Networking: WebRTC P2P (PeerJS), automated signaling, deterministic lockstep
 Rendering: Neon wireframe vector aesthetic (Canvas 2D)
 Simulation: Manual fixed-point, fixed timestep, determinism-first
 
@@ -252,7 +252,13 @@ For each tank:
 
 ---
 
-8. Deterministic Lockstep Networking (See full document for protocol details)
+8. Deterministic Lockstep Networking
+
+Protocol:
+* Automated handshake via PeerJS.
+* Shared 32-bit seed exchange upon connection.
+* Ordered DataChannels for SHOT and SYNC messages.
+* Turn-based state hash validation.
 
 ---
 
@@ -262,6 +268,11 @@ HUD:
 * Relative Angle shown.
 * Health, Timer, Wind, Active Player.
 * No debug text (ticks/hashes) shown in production HUD.
+
+Lobby:
+* Host Room ID visibility.
+* Join Invitation Links (one-click join).
+* Status reporting (Registering, Online, Syncing, Connected).
 
 Controls:
 * Left/Right: relative angle.

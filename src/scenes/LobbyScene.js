@@ -5,6 +5,8 @@ export class LobbyScene extends Phaser.Scene {
     constructor() {
         super('LobbyScene');
         this.networkManager = new NetworkManager();
+        this.syncInterval = null;
+        this.gameStarting = false;
     }
 
     create() {
@@ -23,31 +25,42 @@ export class LobbyScene extends Phaser.Scene {
                 #lobby-ui::-webkit-scrollbar-track { background: #111; }
                 #lobby-ui::-webkit-scrollbar-thumb { background: #0f0; }
                 #lobby-ui button:hover { background: #030 !important; }
+                .ui-card { color: #0f0; font-family: monospace; background: rgba(0,0,0,0.9); padding: 25px; border: 2px solid #0f0; width: 500px; box-shadow: 0 0 20px rgba(0,255,0,0.2); }
+                .input-field { width: 100%; padding: 12px; background: #111; color: #0f0; border: 1px solid #0f0; margin: 10px 0; box-sizing: border-box; font-family: monospace; font-size: 16px; }
+                .primary-btn { background: #000; color: #0f0; border: 1px solid #0f0; padding: 15px; cursor: pointer; width: 100%; font-size: 18px; font-family: monospace; margin-bottom: 10px; }
+                .secondary-btn { background: #000; color: #ff0; border: 1px solid #ff0; padding: 10px; cursor: pointer; width: 48%; font-family: monospace; font-size: 12px; }
             </style>
-            <div id="lobby-ui" style="color: #0f0; font-family: monospace; background: rgba(0,0,0,0.9); padding: 25px; border: 2px solid #0f0; width: 500px; box-shadow: 0 0 20px rgba(0,255,0,0.2);">
+            <div id="lobby-ui" class="ui-card">
                 <div id="initial-actions">
-                    <button id="btn-host" style="background: #000; color: #0f0; border: 1px solid #0f0; padding: 15px; cursor: pointer; width: 100%; font-size: 18px; margin-bottom: 10px;">HOST NEW GAME</button>
-                    <button id="btn-join" style="background: #000; color: #0f0; border: 1px solid #0f0; padding: 15px; cursor: pointer; width: 100%; font-size: 18px;">JOIN GAME</button>
+                    <button id="btn-host" class="primary-btn">HOST NEW GAME</button>
+                    <button id="btn-join" class="primary-btn">JOIN GAME</button>
                 </div>
 
                 <div id="host-section" style="display: none; margin-top: 10px; text-align: center;">
-                    <p style="margin: 10px 0; font-size: 16px;">GAME READY!</p>
-                    <p style="margin: 5px 0; color: #888;">Share this link with your opponent:</p>
-                    <button id="btn-copy-link" style="background: #000; color: #ff0; border: 1px solid #ff0; padding: 12px; cursor: pointer; width: 100%; margin: 10px 0; font-weight: bold;">COPY INVITE LINK</button>
-                    <p style="margin: 10px 0; color: #0f0;">Waiting for opponent to connect...</p>
+                    <p style="margin: 10px 0; font-size: 16px; color: #0f0;">YOU ARE HOSTING</p>
+                    <div style="background: #111; border: 1px dashed #0f0; padding: 10px; margin: 15px 0;">
+                        <p style="margin: 0 0 5px 0; color: #888; font-size: 12px;">ROOM ID</p>
+                        <div id="room-id-display" style="font-size: 24px; letter-spacing: 2px; color: #fff;">--------</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <button id="btn-copy-id" class="secondary-btn">COPY ID</button>
+                        <button id="btn-copy-link" class="secondary-btn">COPY INVITE LINK</button>
+                    </div>
+                    <p id="host-waiting-msg" style="margin: 10px 0; color: #0f0; animation: blink 1s infinite;">Waiting for opponent...</p>
                 </div>
 
                 <div id="join-section" style="display: none; margin-top: 10px;">
                     <p style="margin: 5px 0;">Enter Host Room ID:</p>
-                    <input type="text" id="join-id-input" style="width: 100%; padding: 10px; background: #111; color: #0f0; border: 1px solid #0f0; margin-bottom: 10px;" placeholder="Paste Room ID here...">
-                    <button id="btn-connect-joiner" style="background: #000; color: #0f0; border: 1px solid #0f0; padding: 10px; cursor: pointer; width: 100%;">CONNECT</button>
+                    <input type="text" id="join-id-input" class="input-field" placeholder="Paste ID here...">
+                    <button id="btn-connect-joiner" class="primary-btn" style="margin-top: 10px;">CONNECT TO HOST</button>
                 </div>
 
                 <div id="status" style="margin-top: 20px; border-top: 1px solid #0f0; padding-top: 15px;">
-                    <div id="status-text" style="font-size: 14px;">Waiting...</div>
-                    <button id="btn-cancel" style="margin-top: 15px; background: #000; color: #f44; border: 1px solid #f44; cursor: pointer; display: none; padding: 5px 10px; width: 100%;">CANCEL</button>
+                    <div id="status-text" style="font-size: 14px; color: #0f0;">Status: Ready</div>
+                    <button id="btn-cancel" style="margin-top: 15px; background: #000; color: #f44; border: 1px solid #f44; cursor: pointer; display: none; padding: 10px; width: 100%; font-family: monospace;">CANCEL / BACK</button>
                 </div>
             </div>
+            <style> @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } } </style>
         `;
 
         this.add.dom(width / 2, 110).createFromHTML(lobbyHtml).setOrigin(0.5, 0);
@@ -59,45 +72,55 @@ export class LobbyScene extends Phaser.Scene {
         const initialActions = document.getElementById('initial-actions');
         const statusText = document.getElementById('status-text');
         const btnCancel = document.getElementById('btn-cancel');
+        const roomIdDisplay = document.getElementById('room-id-display');
+        const joinIdInput = document.getElementById('join-id-input');
+
+        const cleanup = () => {
+            if (this.syncInterval) clearInterval(this.syncInterval);
+            window.location.hash = '';
+            this.gameStarting = false;
+        };
+
+        this.events.on('shutdown', cleanup);
 
         const checkHash = () => {
             const hash = window.location.hash;
             if (hash.startsWith('#join=')) {
                 const hostId = hash.substring(6);
-                this.autoJoin(hostId);
+                this.prepareJoinUI(hostId);
+                this.performJoin(hostId);
             }
         };
 
         checkHash();
         window.addEventListener('hashchange', checkHash);
-        
-        this.events.on('shutdown', () => {
-            window.removeEventListener('hashchange', checkHash);
-        });
 
         btnCancel.addEventListener('click', () => {
-            this.networkManager.disconnect();
+            this.networkManager.disconnect(); // Manual disconnect
+            cleanup();
             this.scene.restart();
-            window.location.hash = '';
         });
 
         btnHost.addEventListener('click', async () => {
             initialActions.style.display = 'none';
             hostSection.style.display = 'block';
             btnCancel.style.display = 'block';
-            statusText.innerText = 'Registering on network...';
-
+            statusText.innerText = 'Status: Registering...';
             try {
                 const id = await this.networkManager.host();
-                statusText.innerText = 'Online. Share the link!';
-                
+                roomIdDisplay.innerText = id;
+                statusText.innerText = 'Status: Online';
+                document.getElementById('btn-copy-id').onclick = () => {
+                    navigator.clipboard.writeText(id);
+                    if (!this.gameStarting) statusText.innerText = 'Status: ID Copied!';
+                };
                 document.getElementById('btn-copy-link').onclick = () => {
                     const url = `${window.location.origin}${window.location.pathname}#join=${id}`;
                     navigator.clipboard.writeText(url);
-                    statusText.innerText = 'Link copied to clipboard!';
+                    if (!this.gameStarting) statusText.innerText = 'Status: Link Copied!';
                 };
             } catch (err) {
-                statusText.innerText = 'Error: Could not register room';
+                statusText.innerText = 'Status: Registration Error';
                 statusText.style.color = '#f00';
             }
         });
@@ -106,86 +129,74 @@ export class LobbyScene extends Phaser.Scene {
             initialActions.style.display = 'none';
             joinSection.style.display = 'block';
             btnCancel.style.display = 'block';
-            statusText.innerText = 'Enter Room ID';
+            statusText.innerText = 'Status: Enter Room ID';
         });
 
         document.getElementById('btn-connect-joiner').addEventListener('click', () => {
-            const hostId = document.getElementById('join-id-input').value.trim();
-            if (hostId) {
-                this.autoJoin(hostId);
-            }
+            const hostId = joinIdInput.value.trim();
+            if (hostId) this.performJoin(hostId);
         });
 
         this.networkManager.onConnectionStateChange((state) => {
-            statusText.innerText = `Status: ${state.toUpperCase()}`;
             if (state === 'connected') {
                 statusText.style.color = '#0f0';
-                statusText.innerText = 'CONNECTED! Syncing...';
-                
+                statusText.innerText = 'Status: CONNECTED! Syncing...';
                 if (this.networkManager.isHost) {
-                    // Give WebRTC a tiny bit of time to settle data flow
-                    this.time.delayedCall(500, () => {
-                        const seed = Math.floor(Math.random() * 0xFFFFFFFF);
-                        console.log('Sending MATCH_INIT with seed:', seed);
-                        this.networkManager.send({
-                            type: 'MATCH_INIT',
-                            seed: seed,
-                            protocolVersion: '1.0'
-                        });
-                        this.startGame(seed);
-                    });
+                    const seed = Math.floor(Math.random() * 0xFFFFFFFF);
+                    if (this.syncInterval) clearInterval(this.syncInterval);
+                    this.syncInterval = setInterval(() => {
+                        if (this.networkManager.connection && this.networkManager.connection.open) {
+                            this.networkManager.send({ type: 'MATCH_INIT', seed });
+                        }
+                    }, 500);
                 }
-            } else if (state === 'failed' || state === 'closed') {
+            } else if (state === 'closed' || state === 'failed') {
                 statusText.style.color = '#f00';
+                statusText.innerText = `Status: ${state.toUpperCase()}`;
             }
         });
 
-        // For Joiner: listen for MATCH_INIT
-        if (!this.networkManager.isHost) {
-            this.networkManager.onMessage((msg) => {
-                if (msg.type === 'MATCH_INIT') {
-                    console.log('Received MATCH_INIT with seed:', msg.seed);
-                    this.startGame(msg.seed);
-                }
-            });
-        }
-    }
-
-    async autoJoin(hostId) {
-        const initialActions = document.getElementById('initial-actions');
-        const joinSection = document.getElementById('join-section');
-        const btnCancel = document.getElementById('btn-cancel');
-        const statusText = document.getElementById('status-text');
-
-        if (initialActions) initialActions.style.display = 'none';
-        if (joinSection) joinSection.style.display = 'block';
-        if (btnCancel) btnCancel.style.display = 'block';
-        
-        const input = document.getElementById('join-id-input');
-        if (input) input.value = hostId;
-
-        // Ensure we listen for MATCH_INIT even in autoJoin flow
         this.networkManager.onMessage((msg) => {
-            if (msg.type === 'MATCH_INIT') {
-                console.log('Received MATCH_INIT in autoJoin with seed:', msg.seed);
+            if (msg.type === 'MATCH_INIT' && !this.networkManager.isHost) {
+                if (this.gameStarting) return;
+                this.networkManager.send({ type: 'ACK_MATCH_INIT', seed: msg.seed });
+                this.startGame(msg.seed);
+            } else if (msg.type === 'ACK_MATCH_INIT' && this.networkManager.isHost) {
+                if (this.gameStarting) return;
+                if (this.syncInterval) {
+                    clearInterval(this.syncInterval);
+                    this.syncInterval = null;
+                }
                 this.startGame(msg.seed);
             }
         });
+    }
 
-        statusText.innerText = 'Connecting to host...';
+    prepareJoinUI(hostId) {
+        const joinSection = document.getElementById('join-section');
+        const initialActions = document.getElementById('initial-actions');
+        const btnCancel = document.getElementById('btn-cancel');
+        const joinIdInput = document.getElementById('join-id-input');
+        if (initialActions) initialActions.style.display = 'none';
+        if (joinSection) joinSection.style.display = 'block';
+        if (btnCancel) btnCancel.style.display = 'block';
+        if (joinIdInput) joinIdInput.value = hostId;
+    }
+
+    async performJoin(hostId) {
+        document.getElementById('status-text').innerText = 'Status: Connecting...';
         try {
             await this.networkManager.join(hostId);
         } catch (err) {
-            statusText.innerText = 'Error: Connection failed';
-            statusText.style.color = '#f00';
+            document.getElementById('status-text').innerText = 'Status: Connection Failed';
         }
     }
 
     startGame(seed) {
-        const statusText = document.getElementById('status-text');
-        if (statusText) statusText.innerText = 'STARTING GAME...';
-        
-        this.time.delayedCall(200, () => {
+        if (this.gameStarting) return;
+        this.gameStarting = true;
+        document.getElementById('status-text').innerText = 'Status: STARTING GAME...';
+        this.time.delayedCall(300, () => {
             this.scene.start('GameScene', { 
                 networkManager: this.networkManager, 
                 isHost: this.networkManager.isHost, 

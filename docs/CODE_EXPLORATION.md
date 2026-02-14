@@ -6,7 +6,7 @@ Tank Wars follows a decoupled architecture where the **Deterministic Simulation 
 
 - **Simulation (`src/simulation/`)**: Pure JavaScript logic. No `Math.random()`, `Date.now()`, or floating-point numbers.
 - **Rendering (`src/render/` & `src/scenes/`)**: Phaser 3 components that visualize the simulation state.
-- **Networking (`src/net/`)**: WebRTC-based P2P communication.
+- **Networking (`src/net/`)**: Automated PeerJS-based P2P communication.
 - **UI/HUD (`src/ui/`)**: Overlay for game stats and status.
 
 ---
@@ -45,28 +45,28 @@ Phaser acts as a "view" in the MVC pattern.
 ### The Game Loop (`GameScene.js`)
 - Implements a **Fixed Timestep** loop (`update` method).
 - Accumulates delta time and calls `simulation.step()` at 60Hz.
-- **Interpolation:** While currently rendering the current state, the system is structured to support visual interpolation between simulation ticks.
 
 ### Renderers (`src/render/`)
 - Specialized classes (`TerrainRenderer`, `TankRenderer`, etc.) handle the drawing of simulation objects.
 - They use Phaser's Graphics and Containers to create a neon/glow aesthetic.
 - **One-way Flow:** Renderers read from the simulation state every frame but never modify it.
-- **Clean UI:** Redundant elements like in-world health bars and debug overlays are disabled for a cleaner experience.
 
 ---
 
 ## 3. Networking (`src/net/webrtc.js`)
 
-Uses P2P WebRTC DataChannels for low-latency communication.
+Uses **PeerJS** for automated WebRTC P2P communication.
 
 ### Connection Protocol
-- **Lobby:** Players exchange SDP offers/answers and ICE candidates. Includes a compact, scrollable UI for signaling.
-- **DataChannel:** Configured as `ordered: true` to ensure turn messages arrive in sequence.
+- **Signaling:** PeerJS handles the Offer/Answer/ICE exchange automatically using a cloud signaling service.
+- **Invite Links:** A room ID is embedded in the URL hash (`#join=ID`), allowing for a "one-click" join experience.
+- **Symmetric UI:** Both host and joiner have clear visibility of the Room ID for manual entry if needed.
 
-### Synchronization & Validation
+### Synchronization & Handshake
+- **Seed Sync:** Upon connection, the Host generates a random 32-bit seed and sends it via `MATCH_INIT`.
+- **Sync ACK:** The Joiner acknowledges the seed. Only after this handshake is complete does the match transition to the GameScene.
 - **SHOT Messages:** Transmit angle and power. Validated for range and turn ownership.
-- **State Hashes:** After every turn, clients exchange a hash of the simulation state.
-- **Authoritative Host:** If a hash mismatch is detected, the Host sends an authoritative `SYNC` message containing the full simulation state to the Client.
+- **State Hashes:** After every turn, clients exchange a hash of the simulation state to verify determinism.
 
 ---
 
@@ -75,14 +75,13 @@ Uses P2P WebRTC DataChannels for low-latency communication.
 ### Determinism Tests (`tests/determinism.js`)
 - Runs two identical simulations locally with a scripted set of shots.
 - Compares the `getStateHash()` result turn-by-turn.
-- If even one bit differs, the test fails, indicating a "desync" bug.
 
 ### Unit Tests (`tests/unit/`)
 - Uses `vitest` to verify individual components like `fixed.js`, `rng.js`, and `terrain.js`.
-- Ensures core math remains stable during refactoring.
 
 ### E2E Tests (`tests/e2e/`)
-- Uses Playwright to simulate full match scenarios in a headless browser.
+- Uses Playwright to simulate full match scenarios.
+- Tests the automated PeerJS handshake and multi-turn synchronization.
 
 ---
 

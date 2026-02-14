@@ -1,6 +1,6 @@
 import { FP, TANK_WIDTH, TANK_HEIGHT, GRAVITY_FP, FRICTION_KINETIC_FP, FRICTION_STATIC_THRESHOLD } from './constants.js';
 import { mulFP, divFP, clamp } from './fixed.js';
-import { getSin } from './trigLUT.js';
+import { getSin, getAtan2 } from './trigLUT.js';
 import { isqrt } from './isqrt.js';
 
 export class Tank {
@@ -48,8 +48,8 @@ export class Tank {
         // Calculate slope for rotation
         const hL = terrain.getHeightAtX(x - 4);
         const hR = terrain.getHeightAtX(x + 4);
-        // angle = atan2(dy, dx)
-        this.baseAngleDeg = Math.floor(Math.atan2(hR - hL, 8) * 180 / Math.PI);
+        // Use deterministic getAtan2
+        this.baseAngleDeg = getAtan2(hR - hL, 8);
 
         if (tankBottomY <= groundY + epsilon && tankBottomY >= groundY - epsilon) {
             // On ground

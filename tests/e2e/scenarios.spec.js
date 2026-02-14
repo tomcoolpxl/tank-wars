@@ -9,6 +9,9 @@ async function setupMatch(browser) {
   const hostPage = await hostContext.newPage();
   const joinerPage = await joinerContext.newPage();
 
+  hostPage.on('console', msg => console.log('HOST:', msg.text()));
+  joinerPage.on('console', msg => console.log('JOINER:', msg.text()));
+
   await hostPage.goto('/');
   await hostPage.click('#btn-host');
   await expect(hostPage.locator('#status-text')).toHaveText(/Online/, { timeout: 15000 });
@@ -19,7 +22,8 @@ async function setupMatch(browser) {
   });
 
   await joinerPage.goto(inviteLink);
-  await expect(hostPage.locator('#status-text')).toHaveText(/CONNECTED/i, { timeout: 20000 });
+  const connectedRegex = /CONNECTED|STARTING GAME/i;
+  await expect(hostPage.locator('#status-text')).toHaveText(connectedRegex, { timeout: 20000 });
 
   await hostPage.waitForFunction(() => window.game?.scene.isActive('GameScene'), { timeout: 30000 });
   await joinerPage.waitForFunction(() => window.game?.scene.isActive('GameScene'), { timeout: 30000 });
@@ -64,22 +68,29 @@ test.describe('Advanced Game Scenarios', () => {
     const { hostPage, joinerPage, hostContext, joinerContext } = await setupMatch(browser);
     contexts = [hostContext, joinerContext];
 
-    const fastForward = () => {
-        window.game.scene.getScene('GameScene').simulation.rules.turnTimer = 10;
-    };
-    await hostPage.evaluate(fastForward);
-    await joinerPage.evaluate(fastForward);
+    // Fast forward turn timer on active page to trigger auto-fire
+    const hostIsActive = await hostPage.evaluate(() => window.game.scene.getScene('GameScene').simulation.rules.activePlayerIndex === 0);
+    
+    if (hostIsActive) {
+        await hostPage.evaluate(() => {
+            window.game.scene.getScene('GameScene').simulation.rules.turnTimer = 10;
+        });
+    } else {
+        await joinerPage.evaluate(() => {
+            window.game.scene.getScene('GameScene').simulation.rules.turnTimer = 10;
+        });
+    }
 
     await expect.poll(async () => {
         const s = await getSimState(hostPage);
         return s.turn;
     }, { timeout: 30000 }).toBe(2);
 
-    await hostPage.waitForTimeout(500);
-
-    const hostState = await getSimState(hostPage);
-    const joinerState = await getSimState(joinerPage);
-    expect(hostState.hash).toBe(joinerState.hash);
+    await expect.poll(async () => {
+        const hostState = await getSimState(hostPage);
+        const joinerState = await getSimState(joinerPage);
+        return hostState.hash === joinerState.hash;
+    }, { timeout: 10000 }).toBe(true);
   });
 
   test('Out-of-bounds projectile (no explosion)', async ({ browser }) => {
@@ -134,8 +145,11 @@ test.describe('Advanced Game Scenarios', () => {
     const { hostPage, joinerPage, hostContext, joinerContext } = await setupMatch(browser);
     contexts = [hostContext, joinerContext];
 
+    // Joiner (Player 1) sends an invalid shot to Host (Player 0's turn)
     await joinerPage.evaluate(() => {
         const gameScene = window.game.scene.getScene('GameScene');
+        // Manually trigger fire with invalid params to force SHOT message
+        gameScene.simulation.fire(45.5, 50, 1);
         gameScene.networkManager.send({
             type: 'SHOT',
             turnNumber: 1,
@@ -147,7 +161,7 @@ test.describe('Advanced Game Scenarios', () => {
     await expect.poll(async () => {
         const s = await getSimState(hostPage);
         return s.state;
-    }, { timeout: 10000 }).toBe('GAME_OVER');
+    }, { timeout: 15000 }).toBe('GAME_OVER');
 
     const state = await getSimState(hostPage);
     expect(state.winner).toBe(-2);

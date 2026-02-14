@@ -5,26 +5,23 @@ A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspi
 ## Features
 
 - **Deterministic Simulation**: Lockstep synchronization ensures both players see the exact same physics and outcomes.
-- **P2P Networking**: Direct connection between players using WebRTC (no game server required).
+- **Automated P2P Networking**: Direct connection between players using PeerJS (WebRTC) with zero-config setup.
 - **Fixed-Point Math**: Custom math library to ensure cross-platform determinism.
 - **Neon Aesthetic**: Glowing vector graphics with screen-space effects.
-- **Manual Signaling**: Easy to connect even without a signaling server.
+- **One-Link Handshake**: Share a single link to connect instantly—no manual SDP exchange required.
 
 ## How to Play
 
 ### Hosting a Game
-1. Open the game and click **HOST GAME**.
-2. Copy the generated **Offer** string.
-3. Send this string to your opponent (via chat, email, etc.).
-4. Wait for your opponent to send back an **Answer** string.
-5. Paste their Answer into the box and click **Connect**.
+1. Open the game and click **HOST NEW GAME**.
+2. Wait for your **Room ID** to be generated.
+3. Click **COPY INVITE LINK** and send it to your opponent.
+4. Keep the tab open; the game starts automatically when they join!
 
 ### Joining a Game
-1. Open the game and click **JOIN GAME**.
-2. Paste the **Offer** string sent by the host.
-3. Click **Create Answer**.
-4. Copy the generated **Answer** string and send it back to the host.
-5. The game will start automatically once the host connects.
+1. Simply click the **Invite Link** sent by the host.
+2. The game will automatically connect and synchronize.
+3. (Alternatively) Click **JOIN GAME** and paste the host's **Room ID**.
 
 ### Controls
 - **Left/Right Arrows**: Adjust firing angle.
@@ -37,13 +34,12 @@ A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspi
 The simulation runs at a fixed 60Hz. All physics calculations use fixed-point arithmetic (1,000,000x scale) to avoid floating-point drift between different browsers or operating systems.
 
 ### Networking
-WebRTC DataChannels are used for low-latency input exchange. We use a manual signaling flow to remain entirely serverless. 
+We use **PeerJS** for automated WebRTC signaling. This allows for a serverless P2P experience where players connect via unique Room IDs or invitation links. 
 
-**Note on Connectivity (NAT/Firewall):**
-This game uses Google's public STUN servers to discover your network address. However, it does **not** include a TURN server (relay).
-- Connection will work on most home networks and mobile hotspots.
-- Connection may fail on restrictive corporate or university networks that require a TURN relay.
-- If you see "ICE: failed" or the candidate count stays at 0, your network might be blocking the P2P connection.
+**Handshake & Sync:**
+- **Automated Exchange**: When a joiner uses a link, the Offer/Answer exchange happens automatically.
+- **Seed Synchronization**: The host generates a shared 32-bit seed upon connection to ensure identical terrain and RNG state.
+- **State Validation**: Clients exchange state hashes after every turn to verify perfect synchronization.
 
 ## Documentation
 

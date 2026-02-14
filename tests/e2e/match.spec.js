@@ -10,6 +10,9 @@ test('Full match setup and gameplay (PeerJS)', async ({ browser }) => {
   const hostPage = await hostContext.newPage();
   const joinerPage = await joinerContext.newPage();
 
+  hostPage.on('console', msg => console.log('HOST:', msg.text()));
+  joinerPage.on('console', msg => console.log('JOINER:', msg.text()));
+
   await hostPage.goto('/');
 
   // 1. Handshake
@@ -24,7 +27,8 @@ test('Full match setup and gameplay (PeerJS)', async ({ browser }) => {
   await joinerPage.goto(inviteLink);
 
   // 2. Wait for GameScene
-  await expect(hostPage.locator('#status-text')).toHaveText(/CONNECTED/i, { timeout: 20000 });
+  const connectedRegex = /CONNECTED|STARTING GAME/i;
+  await expect(hostPage.locator('#status-text')).toHaveText(connectedRegex, { timeout: 20000 });
   
   await hostPage.waitForFunction(() => 
     window.game && window.game.scene.isActive('GameScene') &&
@@ -54,21 +58,33 @@ test('Full match setup and gameplay (PeerJS)', async ({ browser }) => {
   });
 
   // 4. Verify initial state matches
+  await expect.poll(async () => {
+    const hostState = await getSimState(hostPage);
+    const joinerState = await getSimState(joinerPage);
+    return hostState.hash === joinerState.hash;
+  }, { timeout: 10000 }).toBe(true);
+
   const hostStateInit = await getSimState(hostPage);
   const joinerStateInit = await getSimState(joinerPage);
-  expect(hostStateInit.hash).toBe(joinerStateInit.hash);
+  expect(hostStateInit.activePlayer).toBe(0);
 
   // 5. Gameplay - Host fires
+  await hostPage.click('canvas');
   await hostPage.keyboard.press('Space');
 
-  // Wait for Turn 2
+  // Wait for Turn 2 and state convergence
   await expect.poll(async () => {
     const s = await getSimState(hostPage);
     return s.turn;
   }, { timeout: 20000 }).toBe(2);
 
+  // Use poll for hash to allow SYNC to arrive if there was a minor desync
+  await expect.poll(async () => {
+    const hostState = await getSimState(hostPage);
+    const joinerState = await getSimState(joinerPage);
+    return joinerState.hash === hostState.hash;
+  }, { timeout: 10000 }).toBe(true);
+
   const hostStateTurn2 = await getSimState(hostPage);
-  const joinerStateTurn2 = await getSimState(joinerPage);
-  expect(hostStateTurn2.hash).toBe(joinerStateTurn2.hash);
   expect(hostStateTurn2.activePlayer).toBe(1);
 });

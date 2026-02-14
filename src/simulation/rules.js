@@ -30,6 +30,7 @@ export class Rules {
         // wind = (randInt(-15, 15) + randInt(-15, 15)) / 2
         const r1 = rng.nextInt(-15, 15);
         const r2 = rng.nextInt(-15, 15);
+        // Use Math.trunc to ensure consistent rounding towards zero for both positive and negative results
         this.wind = Math.trunc((r1 + r2) / 2);
     }
 
