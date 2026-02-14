@@ -26,19 +26,19 @@ export class HUD {
         const statStyle = { font: 'bold 16px monospace', fill: textColor };
 
         // Player 1 Area
-        this.p1Label = this.scene.add.text(20, 15, 'PLAYER 1', labelStyle);
-        this.p1HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(20, 35, 200, 12);
+        this.p1Label = this.scene.add.text(20, 20, 'PLAYER 1', labelStyle);
+        this.p1HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(20, 40, 200, 12);
         this.p1HealthBar = this.scene.add.graphics();
-        this.p1AngleText = this.scene.add.text(20, 60, 'ANG: 45°', statStyle);
-        this.p1PowerText = this.scene.add.text(20, 95, 'PWR: 50', statStyle);
+        this.p1AngleText = this.scene.add.text(20, 75, 'ANG: 45°', statStyle);
+        this.p1PowerText = this.scene.add.text(20, 110, 'PWR: 50', statStyle);
         this.container.add([this.p1Label, this.p1HealthBG, this.p1HealthBar, this.p1AngleText, this.p1PowerText]);
 
         // Player 2 Area
-        this.p2Label = this.scene.add.text(800 - 20, 15, 'PLAYER 2', labelStyle).setOrigin(1, 0);
-        this.p2HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(800 - 220, 35, 200, 12);
+        this.p2Label = this.scene.add.text(800 - 20, 20, 'PLAYER 2', labelStyle).setOrigin(1, 0);
+        this.p2HealthBG = this.scene.add.graphics().fillStyle(0x333333).fillRect(800 - 220, 40, 200, 12);
         this.p2HealthBar = this.scene.add.graphics();
-        this.p2AngleText = this.scene.add.text(800 - 20, 60, 'ANG: 45°', statStyle).setOrigin(1, 0);
-        this.p2PowerText = this.scene.add.text(800 - 20, 95, 'PWR: 50', statStyle).setOrigin(1, 0);
+        this.p2AngleText = this.scene.add.text(800 - 20, 75, 'ANG: 45°', statStyle).setOrigin(1, 0);
+        this.p2PowerText = this.scene.add.text(800 - 20, 110, 'PWR: 50', statStyle).setOrigin(1, 0);
         this.container.add([this.p2Label, this.p2HealthBG, this.p2HealthBar, this.p2AngleText, this.p2PowerText]);
 
         // Center Area (Timer & Wind)
@@ -53,7 +53,7 @@ export class HUD {
 
         this.createDOMButtons();
 
-        this.turnIndicator = this.scene.add.text(400, 130, 'YOUR TURN', { font: 'bold 20px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
+        this.turnIndicator = this.scene.add.text(400, 145, 'YOUR TURN', { font: 'bold 20px monospace', fill: '#ffff00' }).setOrigin(0.5, 0.5);
         this.container.add(this.turnIndicator);
         this.statusText = this.scene.add.text(400, 250, '', { font: 'bold 32px monospace', fill: '#ff00ff' }).setOrigin(0.5, 0.5).setVisible(false);
         this.container.add(this.statusText);
@@ -183,8 +183,8 @@ export class HUD {
             this.buttonStates['fire'] = false;
         }
 
-        this.updateHealthBar(this.p1HealthBar, 20, 35, simulation.tanks[0].health, 12);
-        this.updateHealthBar(this.p2HealthBar, 800 - 220, 35, simulation.tanks[1].health, 12);
+        this.updateHealthBar(this.p1HealthBar, 20, 40, simulation.tanks[0].health, 12);
+        this.updateHealthBar(this.p2HealthBar, 800 - 220, 40, simulation.tanks[1].health, 12);
 
         const seconds = Math.max(0, Math.ceil(rules.turnTimer / 60));
         this.timerText.setText(seconds.toString()).setVisible(isAiming);
@@ -222,14 +222,16 @@ export class HUD {
                 domObj.setVisible(show);
                 if (show) {
                     const isP1 = activePlayerIndex === 0;
-                    // Put adjustment buttons next to the stats
-                    if (id === 'angle-down') domObj.setPosition(isP1 ? 135 : 665, 67);
-                    if (id === 'angle-up') domObj.setPosition(isP1 ? 170 : 630, 67);
-                    if (id === 'power-down') domObj.setPosition(isP1 ? 135 : 665, 102);
-                    if (id === 'power-up') domObj.setPosition(isP1 ? 170 : 630, 102);
+                    // Mirroring: P1 from left (20), P2 from right (780)
+                    // P1: Text(20) -> Buttons(135/170) -> Fire(250)
+                    // P2: Text(780) -> Buttons(665/630) -> Fire(550)
+                    if (id === 'angle-down') domObj.setPosition(isP1 ? 135 : 665, 82);
+                    if (id === 'angle-up') domObj.setPosition(isP1 ? 170 : 630, 82);
+                    if (id === 'power-down') domObj.setPosition(isP1 ? 135 : 665, 117);
+                    if (id === 'power-up') domObj.setPosition(isP1 ? 170 : 630, 117);
                     
-                    // Fire button right of the +- buttons
-                    if (id === 'fire') domObj.setPosition(isP1 ? 250 : 540, 85);
+                    // Fire button perfectly mirrored and right of adjustment controls (from player perspective)
+                    if (id === 'fire') domObj.setPosition(isP1 ? 250 : 550, 100);
                 }
             });
         }
