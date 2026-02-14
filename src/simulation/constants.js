@@ -45,7 +45,7 @@ export const TANK_DOME_RADIUS_Y = 12;
 // Projectile constants
 export const PROJECTILE_MAX_POWER = 100;
 export const PROJECTILE_POWER_TO_VEL = 3; // power * 3 units/s
-export const PROJECTILE_LIFETIME_TICKS = 600;
+export const PROJECTILE_LIFETIME_TICKS = 1200;
 export const WIND_ACCEL_FP = 500000; // 0.5 * 1,000,000 (acceleration units per unit of wind)
 export const WIND_ACCEL_PER_TICK_FP = Math.floor(WIND_ACCEL_FP / (TICK_RATE * TICK_RATE));
 export const PROJECTILE_SELF_COLLISION_TICKS = 20;

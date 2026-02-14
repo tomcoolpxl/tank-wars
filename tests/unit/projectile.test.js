@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Projectile } from '../../src/simulation/projectile.js';
 import { Terrain } from '../../src/simulation/terrain.js';
 import { Tank } from '../../src/simulation/tank.js';
-import { FP } from '../../src/simulation/constants.js';
+import { FP, PROJECTILE_LIFETIME_TICKS } from '../../src/simulation/constants.js';
 
 describe('Projectile Physics', () => {
     it('should follow gravity', () => {
@@ -41,7 +41,7 @@ describe('Projectile Physics', () => {
 
     it('should respect lifetime cap', () => {
         const p = new Projectile(400 * FP, 500 * FP, 90, 1, 0);
-        p.ticksAlive = 599;
+        p.ticksAlive = PROJECTILE_LIFETIME_TICKS - 1;
         const result = p.step(new Terrain(), []);
         expect(result.type).toBe('timeout');
         expect(p.active).toBe(false);
