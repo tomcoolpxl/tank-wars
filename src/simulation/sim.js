@@ -4,6 +4,7 @@ import { Tank } from './tank.js';
 import { Projectile } from './projectile.js';
 import { Rules, GameState } from './rules.js';
 import { applyExplosion } from './explosion.js';
+import { getSin, getCos } from './trigLUT.js';
 import { 
     FP, STABILIZATION_CAP_TICKS, TANK_SPAWN_LEFT_RANGE, TANK_SPAWN_RIGHT_RANGE 
 } from './constants.js';
@@ -50,6 +51,13 @@ export class Simulation {
                 // Decrement timer
                 if (this.rules.turnTimer > 0) {
                     this.rules.turnTimer--;
+                }
+
+                // Auto-fire if timer reaches 0
+                if (this.rules.turnTimer <= 0) {
+                    const t = this.tanks[this.rules.activePlayerIndex];
+                    this.fire(t.aimAngle, t.aimPower, this.rules.activePlayerIndex);
+                    break;
                 }
 
                 // Apply inputs to active tank

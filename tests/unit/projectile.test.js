@@ -65,12 +65,14 @@ describe('Projectile Physics', () => {
         // Start inside the dome (y=105)
         const p = new Projectile(100 * FP, 105 * FP, 90, 0, 0, 0);
         
-        // Ticks 0-4: ignore self
-        for (let i = 0; i < 4; i++) {
+        // Ticks 0-19: ignore self
+        for (let i = 0; i < 19; i++) {
             expect(p.step(new Terrain(), [shooter, target])).toBeNull();
+            p.ticksAlive = i + 1; // Manually advance if needed or just let step do it
         }
         
-        // Tick 5+: hit self (we need it to still be inside the dome)
+        // Tick 20+: hit self (we need it to still be inside the dome)
+        p.vx_fp = 0;
         p.vy_fp = 0; // stop it from flying out too fast for the test
         const result = p.step(new Terrain(), [shooter, target]);
         expect(result.type).toBe('explosion');

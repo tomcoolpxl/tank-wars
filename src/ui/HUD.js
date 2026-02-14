@@ -66,10 +66,6 @@ export class HUD {
         this.statusText = this.scene.add.text(400, 250, '', { font: 'bold 32px monospace', fill: '#ff00ff' }).setOrigin(0.5, 0.5).setVisible(false);
         this.container.add(this.statusText);
 
-        // Debug Info
-        this.debugText = this.scene.add.text(10, 580, '', { font: '12px monospace', fill: '#ffffff' });
-        this.container.add(this.debugText);
-
         // Game Over Overlay
         this.gameOverOverlay = this.scene.add.container(0, 0).setVisible(false);
         const bg = this.scene.add.rectangle(400, 300, 800, 600, 0x000000, 0.7);
@@ -160,12 +156,9 @@ export class HUD {
             this.gameOverOverlay.setVisible(false);
         }
 
-        // Highlight active player label
+        // Update active player labels
         this.p1Label.setFill(activePlayerIndex === 0 ? '#ffff00' : '#00ffff');
         this.p2Label.setFill(activePlayerIndex === 1 ? '#ffff00' : '#00ffff');
-
-        // Update Debug Info
-        this.debugText.setText(`Tick: ${simulation.tickCount} | Turn: ${rules.turnNumber} | Hash: ${simulation.getStateHash()}`);
     }
 
     updateHealthBar(graphics, x, y, health) {

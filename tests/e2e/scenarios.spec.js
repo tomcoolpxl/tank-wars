@@ -94,16 +94,21 @@ test.describe('Advanced Game Scenarios', () => {
   test('Auto-fire on timeout', async ({ browser }) => {
     const { hostPage, joinerPage } = await setupMatch(browser);
 
-    // Fast forward turn timer on host
-    await hostPage.evaluate(() => {
+    // Fast forward turn timer on BOTH pages to keep them in sync
+    const fastForward = () => {
         window.game.scene.getScene('GameScene').simulation.rules.turnTimer = 10;
-    });
+    };
+    await hostPage.evaluate(fastForward);
+    await joinerPage.evaluate(fastForward);
 
     // Wait for auto-fire (turn increments)
     await expect.poll(async () => {
         const s = await getSimState(hostPage);
         return s.turn;
     }, { timeout: 30000 }).toBe(2);
+
+    // Give it a few frames to settle (projectile might still be flying or exploding)
+    await hostPage.waitForTimeout(500);
 
     const hostState = await getSimState(hostPage);
     const joinerState = await getSimState(joinerPage);

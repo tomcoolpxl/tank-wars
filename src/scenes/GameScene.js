@@ -197,22 +197,14 @@ export class GameScene extends Phaser.Scene {
                 this.lastTurnNumber = this.simulation.rules.turnNumber;
             }
 
-            // Check for auto-fire (only active player enforces this)
-            if (!this.isReplaying && isMyTurn && isAiming && this.simulation.rules.turnTimer <= 0) {
-                const activeTank = this.simulation.tanks[this.localPlayerIndex];
-                const shotData = {
-                    type: 'SHOT',
-                    turnNumber: this.simulation.rules.turnNumber,
-                    angle: activeTank.aimAngle,
-                    power: activeTank.aimPower
-                };
-                this.networkManager.send(shotData);
-                this.recordShot(activeTank.aimAngle, activeTank.aimPower);
-                this.simulation.fire(activeTank.aimAngle, activeTank.aimPower, this.localPlayerIndex);
-            }
-
             // Detect state transition (e.g. from manual or auto fire)
             if (this.simulation.rules.state !== this.lastGameState) {
+                // If it transitioned to PROJECTILE_FLIGHT and it's our turn, we might need to record/send SHOT
+                // but Simulation.step doesn't know about networking.
+                // For auto-fire, we should have sent it. 
+                // Wait, if Simulation handles auto-fire, how does the remote peer know?
+                // The remote peer's Simulation will also auto-fire at the same tick. 
+                // So we don't strictly need to send a SHOT message for auto-fire if it's deterministic.
                 this.lastGameState = this.simulation.rules.state;
             }
 
