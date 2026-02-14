@@ -1,150 +1,105 @@
+import { Peer } from 'peerjs';
+
 export class NetworkManager {
     constructor() {
-        this.peerConnection = null;
-        this.dataChannel = null;
+        this.peer = null;
+        this.connection = null;
         this.onMessageCallback = null;
         this.onConnectionStateChangeCallback = null;
-        this.onIceUpdateCallback = null;
         this.isHost = false;
-        this.iceCandidatesCount = 0;
-
-        this.config = {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
-            ]
-        };
+        this.peerId = null;
     }
 
-    async createOffer() {
+    /**
+     * Initialize PeerJS and start hosting.
+     * Returns the Peer ID.
+     */
+    async host() {
         this.isHost = true;
-        this.setupPeerConnection();
-        this.dataChannel = this.peerConnection.createDataChannel('game-channel', {
-            ordered: true
-        });
-        this.setupDataChannel(this.dataChannel);
+        return new Promise((resolve, reject) => {
+            this.peer = new Peer();
 
-        const offer = await this.peerConnection.createOffer();
-        await this.peerConnection.setLocalDescription(offer);
+            this.peer.on('open', (id) => {
+                this.peerId = id;
+                console.log('Peer ID:', id);
+                resolve(id);
+            });
 
-        return new Promise((resolve) => {
-            const timeout = setTimeout(() => {
-                this.peerConnection.removeEventListener('icecandidate', checkState);
-                resolve(JSON.stringify(this.peerConnection.localDescription));
-            }, 2000);
+            this.peer.on('connection', (conn) => {
+                // If we already have a connection, we might want to reject new ones
+                // but for this game we'll just accept the latest.
+                this.connection = conn;
+                this.setupConnection(conn);
+            });
 
-            const checkState = () => {
-                if (this.peerConnection.iceGatheringState === 'complete') {
-                    clearTimeout(timeout);
-                    this.peerConnection.removeEventListener('icecandidate', checkState);
-                    resolve(JSON.stringify(this.peerConnection.localDescription));
+            this.peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                if (this.onConnectionStateChangeCallback) {
+                    this.onConnectionStateChangeCallback('failed');
                 }
-            };
-
-            if (this.peerConnection.iceGatheringState === 'complete') {
-                clearTimeout(timeout);
-                resolve(JSON.stringify(this.peerConnection.localDescription));
-            } else {
-                this.peerConnection.addEventListener('icecandidate', checkState);
-            }
+                reject(err);
+            });
         });
     }
 
-    async createAnswer(offerJson) {
+    /**
+     * Connect to a host using their Peer ID.
+     */
+    async join(hostId) {
         this.isHost = false;
-        this.setupPeerConnection();
-        
-        const offer = JSON.parse(offerJson);
-        await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        
-        const answer = await this.peerConnection.createAnswer();
-        await this.peerConnection.setLocalDescription(answer);
+        return new Promise((resolve, reject) => {
+            this.peer = new Peer();
 
-        return new Promise((resolve) => {
-            const timeout = setTimeout(() => {
-                this.peerConnection.removeEventListener('icecandidate', checkState);
-                resolve(JSON.stringify(this.peerConnection.localDescription));
-            }, 2000);
+            this.peer.on('open', (id) => {
+                this.peerId = id;
+                const conn = this.peer.connect(hostId, {
+                    reliable: true
+                });
+                this.connection = conn;
+                this.setupConnection(conn);
+                resolve(id);
+            });
 
-            const checkState = () => {
-                if (this.peerConnection.iceGatheringState === 'complete') {
-                    clearTimeout(timeout);
-                    this.peerConnection.removeEventListener('icecandidate', checkState);
-                    resolve(JSON.stringify(this.peerConnection.localDescription));
+            this.peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                if (this.onConnectionStateChangeCallback) {
+                    this.onConnectionStateChangeCallback('failed');
                 }
-            };
-
-            if (this.peerConnection.iceGatheringState === 'complete') {
-                clearTimeout(timeout);
-                resolve(JSON.stringify(this.peerConnection.localDescription));
-            } else {
-                this.peerConnection.addEventListener('icecandidate', checkState);
-            }
+                reject(err);
+            });
         });
     }
 
-    async acceptAnswer(answerJson) {
-        const answer = JSON.parse(answerJson);
-        await this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-    }
-
-    setupPeerConnection() {
-        this.peerConnection = new RTCPeerConnection(this.config);
-        this.iceCandidatesCount = 0;
-
-        this.peerConnection.onconnectionstatechange = () => {
-            if (this.onConnectionStateChangeCallback) {
-                this.onConnectionStateChangeCallback(this.peerConnection.connectionState);
-            }
-        };
-
-        this.peerConnection.onicecandidate = (event) => {
-            if (event.candidate) {
-                this.iceCandidatesCount++;
-            }
-            if (this.onIceUpdateCallback) {
-                this.onIceUpdateCallback(this.peerConnection.iceGatheringState, this.iceCandidatesCount);
-            }
-        };
-
-        this.peerConnection.onicegatheringstatechange = () => {
-            if (this.onIceUpdateCallback) {
-                this.onIceUpdateCallback(this.peerConnection.iceGatheringState, this.iceCandidatesCount);
-            }
-        };
-
-        if (!this.isHost) {
-            this.peerConnection.ondatachannel = (event) => {
-                this.dataChannel = event.channel;
-                this.setupDataChannel(this.dataChannel);
-            };
-        }
-    }
-
-    setupDataChannel(channel) {
-        channel.onopen = () => {
+    setupConnection(conn) {
+        conn.on('open', () => {
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback('connected');
             }
-        };
+        });
 
-        channel.onclose = () => {
+        conn.on('data', (data) => {
+            if (this.onMessageCallback) {
+                this.onMessageCallback(data);
+            }
+        });
+
+        conn.on('close', () => {
             if (this.onConnectionStateChangeCallback) {
                 this.onConnectionStateChangeCallback('closed');
             }
-        };
+        });
 
-        channel.onmessage = (event) => {
-            if (this.onMessageCallback) {
-                const data = JSON.parse(event.data);
-                this.onMessageCallback(data);
+        conn.on('error', (err) => {
+            console.error('Connection error:', err);
+            if (this.onConnectionStateChangeCallback) {
+                this.onConnectionStateChangeCallback('failed');
             }
-        };
+        });
     }
 
     send(message) {
-        if (this.dataChannel && this.dataChannel.readyState === 'open') {
-            this.dataChannel.send(JSON.stringify(message));
+        if (this.connection && this.connection.open) {
+            this.connection.send(message);
         }
     }
 
@@ -156,7 +111,12 @@ export class NetworkManager {
         this.onConnectionStateChangeCallback = callback;
     }
 
-    onIceUpdate(callback) {
-        this.onIceUpdateCallback = callback;
+    disconnect() {
+        if (this.connection) {
+            this.connection.close();
+        }
+        if (this.peer) {
+            this.peer.destroy();
+        }
     }
 }

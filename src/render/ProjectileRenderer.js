@@ -62,9 +62,9 @@ export class ProjectileRenderer {
     }
 
     update(time) {
-        const flicker = 0.8 + Math.random() * 0.2;
-        this.main.alpha = flicker;
-        this.glowInner.alpha = flicker * 0.6;
-        this.glowOuter.alpha = flicker * 0.3;
+        const pulse = 0.9 + Math.sin(time / 200) * 0.1;
+        this.main.alpha = pulse;
+        this.glowInner.alpha = pulse * 0.6;
+        this.glowOuter.alpha = pulse * 0.3;
     }
 }

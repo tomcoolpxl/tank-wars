@@ -189,26 +189,45 @@ export class GameScene extends Phaser.Scene {
         let ticksProcessed = 0;
         // Fixed time step loop
         while (this.tickAccumulator >= TICK_DURATION_MS) {
+            // Only auto-fire if it's our turn
+            this.simulation.autoFireEnabled = isMyTurn;
+
+            const prevState = this.simulation.rules.state;
             this.simulation.step(inputs);
             
+            // Handle auto-fire fallback for passive player (grace period: 5 seconds / 300 ticks)
+            if (!isMyTurn && this.simulation.rules.state === GameState.TURN_AIM && this.simulation.rules.turnTimer < -300) {
+                console.warn('Active player timeout. Force triggering auto-fire.');
+                const t = this.simulation.tanks[this.simulation.rules.activePlayerIndex];
+                this.simulation.fire(t.aimAngle, t.aimPower, this.simulation.rules.activePlayerIndex);
+            }
+
             // Detect turn transition
             if (this.simulation.rules.turnNumber !== this.lastTurnNumber) {
                 this.handleTurnTransition();
                 this.lastTurnNumber = this.simulation.rules.turnNumber;
             }
 
-            // Detect state transition (e.g. from manual or auto fire)
+            // Detect state transition (from manual or auto fire)
             if (this.simulation.rules.state !== this.lastGameState) {
-                // If it transitioned to PROJECTILE_FLIGHT and it's our turn, we might need to record/send SHOT
-                // but Simulation.step doesn't know about networking.
-                // For auto-fire, we should have sent it. 
-                // Wait, if Simulation handles auto-fire, how does the remote peer know?
-                // The remote peer's Simulation will also auto-fire at the same tick. 
-                // So we don't strictly need to send a SHOT message for auto-fire if it's deterministic.
+                // If WE are the ones who just auto-fired (timer <= 0), we MUST send the SHOT message
+                if (isMyTurn && prevState === GameState.TURN_AIM && this.simulation.rules.state === GameState.PROJECTILE_FLIGHT) {
+                    if (this.simulation.rules.turnTimer <= 0) {
+                        const activeTank = this.simulation.tanks[this.localPlayerIndex];
+                        const shotData = {
+                            type: 'SHOT',
+                            turnNumber: this.simulation.rules.turnNumber,
+                            angle: activeTank.aimAngle,
+                            power: activeTank.aimPower
+                        };
+                        this.networkManager.send(shotData);
+                        this.recordShot(activeTank.aimAngle, activeTank.aimPower);
+                    }
+                }
                 this.lastGameState = this.simulation.rules.state;
             }
 
-            // Check for local fire
+            // Check for local manual fire
             if (!this.isReplaying && isMyTurn && isAiming) {
                 const activeTank = this.simulation.tanks[this.localPlayerIndex];
                 if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {

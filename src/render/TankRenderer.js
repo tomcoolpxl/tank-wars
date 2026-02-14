@@ -82,11 +82,11 @@ export class TankRenderer {
     }
 
     update(time) {
+        const pulse = 0.95 + Math.sin(time / 400) * 0.05;
         this.tankContainers.forEach(container => {
-            const flicker = 0.9 + Math.random() * 0.1;
-            container.main.alpha = flicker;
-            container.glowInner.alpha = flicker * 0.6;
-            container.glowOuter.alpha = flicker * 0.3;
+            container.main.alpha = pulse;
+            container.glowInner.alpha = pulse * 0.6;
+            container.glowOuter.alpha = pulse * 0.3;
         });
     }
 }

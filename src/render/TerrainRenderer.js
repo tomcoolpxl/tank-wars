@@ -49,10 +49,10 @@ export class TerrainRenderer {
     }
 
     update(time) {
-        // Subtle flicker
-        const flicker = 0.8 + Math.random() * 0.2;
-        this.graphics.alpha = flicker;
-        this.glowGraphics[0].alpha = flicker * 0.6;
-        this.glowGraphics[1].alpha = flicker * 0.3;
+        // Smooth sine-wave glow instead of random flicker
+        const pulse = 0.9 + Math.sin(time / 500) * 0.1;
+        this.graphics.alpha = pulse;
+        this.glowGraphics[0].alpha = pulse * 0.6;
+        this.glowGraphics[1].alpha = pulse * 0.3;
     }
 }

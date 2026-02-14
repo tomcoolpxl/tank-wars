@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Invite link handshake', async ({ browser }) => {
+test('Invite link handshake (PeerJS)', async ({ browser }) => {
   const hostContext = await browser.newContext();
   const joinerContext = await browser.newContext();
 
@@ -15,10 +15,9 @@ test('Invite link handshake', async ({ browser }) => {
 
   // 1. Host generates link
   await hostPage.click('#btn-host');
-  await hostPage.waitForFunction(() => {
-    const el = document.getElementById('offer-out');
-    return el && el.value && el.value.length > 0;
-  }, { timeout: 15000 });
+  
+  // Wait for "Online" status
+  await expect(hostPage.locator('#status-text')).toHaveText(/Online/, { timeout: 15000 });
   
   await hostPage.click('#btn-copy-link');
   
@@ -27,49 +26,23 @@ test('Invite link handshake', async ({ browser }) => {
     return await navigator.clipboard.readText();
   });
   
-  expect(inviteLink).toContain('#offer=');
+  expect(inviteLink).toContain('#join=');
 
   // 2. Joiner opens link
   await joinerPage.goto(inviteLink);
   
-  // Check if offer is populated
-  await expect(joinerPage.locator('#offer-in')).not.toHaveValue('', { timeout: 10000 });
-  await expect(joinerPage.locator('#status-text')).toHaveText(/Offer loaded from link/);
+  // Verify automated connection
+  await expect(joinerPage.locator('#status-text')).toHaveText(/CONNECTED/i, { timeout: 20000 });
+  await expect(hostPage.locator('#status-text')).toHaveText(/CONNECTED/i, { timeout: 20000 });
 
-  // 2b. Test hashchange while page is open
-  await joinerPage.goto('/');
-  await expect(joinerPage.locator('#offer-in')).toHaveValue('');
-  await joinerPage.evaluate((link) => {
-    window.location.hash = link.split('#')[1];
-  }, inviteLink);
-  
-  await expect(joinerPage.locator('#offer-in')).not.toHaveValue('', { timeout: 5000 });
-  const populatedOffer = await joinerPage.inputValue('#offer-in');
-  expect(populatedOffer).toContain('"type":"offer"');
-  await joinerPage.click('#btn-create-answer');
-  await joinerPage.waitForFunction(() => {
-    const el = document.getElementById('answer-out');
-    return el && el.value && el.value.length > 0;
-  }, { timeout: 15000 });
-  const answer = await joinerPage.inputValue('#answer-out');
-
-  await hostPage.fill('#answer-in', answer);
-  await hostPage.click('#btn-connect-host');
-
-  // 4. Verify connection
-  // Host stays on LobbyScene for 500ms after connection
-  await expect(hostPage.locator('#status-text')).toHaveText(/CONNECTED/, { timeout: 15000 });
-  
-  // Joiner might transition to GameScene immediately, so we check for either status text or GameScene presence
+  // 3. Verify scene transition
   await hostPage.waitForFunction(() => 
     window.game && 
-    window.game.scene.getScene('GameScene') && 
-    window.game.scene.getScene('GameScene').simulation
+    window.game.scene.isActive('GameScene')
   , { timeout: 15000 });
 
   await joinerPage.waitForFunction(() => 
     window.game && 
-    window.game.scene.getScene('GameScene') && 
-    window.game.scene.getScene('GameScene').simulation
+    window.game.scene.isActive('GameScene')
   , { timeout: 15000 });
 });

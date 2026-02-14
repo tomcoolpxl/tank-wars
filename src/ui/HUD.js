@@ -84,8 +84,8 @@ export class HUD {
         this.updateHealthBar(this.p1HealthBar, 20, 40, simulation.tanks[0].health);
         this.updateHealthBar(this.p2HealthBar, 800 - 220, 40, simulation.tanks[1].health);
 
-        // Update timer (show seconds)
-        const seconds = Math.ceil(rules.turnTimer / 60);
+        // Update timer (show seconds, clamped to 0)
+        const seconds = Math.max(0, Math.ceil(rules.turnTimer / 60));
         this.timerText.setText(seconds.toString());
         this.timerText.setVisible(rules.state === GameState.TURN_AIM);
         this.timerLabel.setVisible(rules.state === GameState.TURN_AIM);

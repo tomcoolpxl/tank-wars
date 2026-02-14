@@ -30,6 +30,7 @@ export class Simulation {
         this.rules = new Rules();
         this.tickCount = 0;
         this.events = [];
+        this.autoFireEnabled = true;
     }
 
     createTank(id, range) {
@@ -48,13 +49,11 @@ export class Simulation {
 
         switch (this.rules.state) {
             case GameState.TURN_AIM:
-                // Decrement timer
-                if (this.rules.turnTimer > 0) {
-                    this.rules.turnTimer--;
-                }
+                // Decrement timer (allow negative if auto-fire is disabled to wait for remote)
+                this.rules.turnTimer--;
 
-                // Auto-fire if timer reaches 0
-                if (this.rules.turnTimer <= 0) {
+                // Auto-fire if timer reaches 0 and is enabled
+                if (this.rules.turnTimer <= 0 && this.autoFireEnabled) {
                     const t = this.tanks[this.rules.activePlayerIndex];
                     this.fire(t.aimAngle, t.aimPower, this.rules.activePlayerIndex);
                     break;
