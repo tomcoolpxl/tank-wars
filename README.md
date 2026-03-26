@@ -2,8 +2,7 @@
 
 ![screenshot](screenshot.png)
 
-A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspired by classic artillery games, featuring a neon vector aesthetic and perfectly synchronized physics. wha-ever
-
+A deterministic, peer-to-peer artillery game built with Phaser and WebRTC. Inspired by classic artillery games, featuring a neon vector aesthetic and perfectly synchronized physics.
 <https://tomcoolpxl.github.io/tank-wars/#>
 
 ## Features
